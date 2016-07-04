@@ -1,0 +1,20 @@
+{
+    "name": "assemble/xerointegration",
+    "description": "Integrate into Xero financial system, to pull invoices and manage payments made.",
+    "type": "Library",
+    "require": {
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alex Blake",
+            "email": "alex@assemble.co.za"
+        }
+    ],
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Assemble\\XeroIntegration\\": "src"
+        }
+    }
+}
