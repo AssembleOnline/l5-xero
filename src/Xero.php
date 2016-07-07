@@ -1,6 +1,6 @@
 <?php
 
-namespace Assemble\XeroIntegration;
+namespace Assemble\l5xero;
 
 use Validator;
 use Config;

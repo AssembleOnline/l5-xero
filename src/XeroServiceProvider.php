@@ -1,10 +1,10 @@
 <?php
 
-namespace Assemble\XeroIntegration;
+namespace Assemble\l5xero;
 
 use Illuminate\Support\ServiceProvider;
 
-class XeroIntegrationServiceProvider extends ServiceProvider
+class XeroServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap the application services.

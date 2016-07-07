@@ -1,6 +1,6 @@
 {
-    "name": "assemble/xerointegration",
-    "description": "Integrate into Xero financial system, to pull invoices and manage payments made.",
+    "name": "assemble/l5xero",
+    "description": "Integrate into Xero financial system, to pull invoices and manage payments made. wrapper of calcinai/xero-php.",
     "type": "Library",
     "require": {
     },
@@ -17,7 +17,7 @@
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
-            "Assemble\\XeroIntegration\\": "src"
+            "Assemble\\l5xero\\": "src"
         }
     }
 }

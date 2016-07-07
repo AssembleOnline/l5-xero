@@ -9,8 +9,8 @@ return [
         'callback'          => 'oob',
         'consumer_key'      => 'YOURCONSUMERKEY',
         'consumer_secret'   => 'YOURSECRETKEY',
-        'rsa_private_key'  	=> 'file:///home/absolutepath/vendor/src/drawmyattention/xerolaravel/Certificates/privatekey.pem',
-        'rsa_public_key'   	=> 'file:///home/absolutepath/vendor/src/drawmyattention/xerolaravel/Certificates/publickey.cer'
+        'rsa_private_key'  	=> 'privatekey.pem',
+        'rsa_public_key'   	=> 'publickey.cer'
     ]
 
 
