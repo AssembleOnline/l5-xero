@@ -38,8 +38,8 @@ class XeroIntegrationServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->bind('xerointegration.searcher', function ($app) {
-            return new Searcher;
+        $this->app->bind('xerointegration.xero', function ($app) {
+            return new Xero;
         });
     }
 

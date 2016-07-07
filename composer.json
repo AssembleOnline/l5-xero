@@ -11,6 +11,9 @@
             "email": "alex@assemble.co.za"
         }
     ],
+    "require": {
+        "calcinai/xero-php": "1.3.*"
+    },
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {

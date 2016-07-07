@@ -18,6 +18,6 @@ class Xero extends Facade
      */
     protected static function getFacadeAccessor()
     {
-        return 'xerointegration.searcher';
+        return 'xerointegration.xero';
     }
 }
