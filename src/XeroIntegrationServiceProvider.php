@@ -26,7 +26,7 @@ class XeroIntegrationServiceProvider extends ServiceProvider
     {
         $source = realpath(__DIR__.'/../config/xero.php');
 
-        $this->publishes([$source => config_path('xero.php')]);
+        $this->publishes([ $source => config_path('xero.php') ]);
 
         $this->mergeConfigFrom($source, 'xero');
     }
@@ -38,9 +38,12 @@ class XeroIntegrationServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->bind('xerointegration.xero', function ($app) {
+
+        $this->app->bind('xero', function () {
             return new Xero;
         });
+
+       
     }
 
 
