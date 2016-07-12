@@ -6,6 +6,8 @@ use Validator;
 use Config;
 use Illuminate\Support\MessageBag;
 use Log;
+use Exception;
+use ReflectionMethod;
 /**
  * This is the xero class.
  *
@@ -17,47 +19,107 @@ class Xero
     /**
      * The class entities in the system.
      */
-    private $config
+    protected $app;
+    protected $config;
 
     /**
      * Create a new Searcher instance.
-     */
-    public function __construct()
+     */    
+    public function __construct($type = null)
     {
         $this->config = Config::get('xero');
+
+        switch (strtolower($type)) {
+            case 'private':
+                $this->app = new \XeroPHP\Application\PrivateApplication($this->config);
+            break;
+            case 'public':
+                $this->app = new \XeroPHP\Application\PublicApplication($this->config);
+            break;
+            case 'partner':
+                $this->app = new \XeroPHP\Application\PartnerApplication($this->config);
+            break;
+            case 'invoice':
+                $this->app = new \XeroPHP\Application\Invoice();
+            break;
+            case 'attachment':
+                $this->app = new \XeroPHP\Application\Attachment();
+            break;
+            case 'lineItem':
+                $this->app = new \XeroPHP\Application\LineItem();
+            break;
+            case 'contact':
+                $this->app = new \XeroPHP\Application\Contact();
+            break;
+            case 'brandingTheme':
+                $this->app = new \XeroPHP\Application\BrandingTheme();
+            break;
+            default:
+                throw new Exception("Application type does not exist [$type]");
+        }
+
+        $arr = [];
+        foreach(get_class_methods($this->app) as $method)
+        {
+            if($method[0] !== '_')
+            {
+                $ref = new ReflectionMethod(get_class($this->app), $method);
+                // dd(get_class_methods($ref));
+
+                $this->$method = function($det) use ($ref) {
+                    return $ref->invoke($this->app, $det);
+                };
+            }
+        }
     }
 
-    public function private()
+    public function __call($method, $args)
     {
-        return new \XeroPHP\Application\PrivateApplication($this->config);
+        if (isset($this->$method)) {
+            $func = $this->$method;
+            return call_user_func_array($func, $args);
+        }
     }
-    public function Public()
+
+    public function methods()
     {
-        return new \XeroPHP\Application\PublicApplication($this->config);
+        $callable = get_object_vars($this);
+        return array_keys($callable);
     }
-    public function Partner()
+
+
+    //Static constructrs for ease.
+    public static function privateApp()
     {
-        return new \XeroPHP\Application\PartnerApplication($this->config);
+        return new Xero('private');
     }
-    public function Invoice()
+    public static function publicApp()
     {
-        return new \XeroPHP\Application\Invoice();
+        return new Xero('public');
     }
-    public function Attachment()
+    public static function partnerApp()
     {
-        return new \XeroPHP\Application\Attachment();
+        return new Xero('partner');
     }
-    public function lineItem()
+    public static function invoice()
     {
-        return new \XeroPHP\Application\LineItem();
+        return new Xero('invoice');
     }
-    public function Contact()
+    public static function attachment()
     {
-        return new \XeroPHP\Application\Contact();
+        return new Xero('attachment');
     }
-    public function BrandingTheme()
+    public static function lineItem()
     {
-        return new \XeroPHP\Application\BrandingTheme();
+        return new Xero('lineItem');
+    }
+    public static function contact()
+    {
+        return new Xero('contact');
+    }
+    public static function brandingTheme()
+    {
+        return new Xero('brandingTheme');
     }
 
 }
