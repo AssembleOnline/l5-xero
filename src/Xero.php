@@ -64,7 +64,6 @@ class Xero
             if($method[0] !== '_')
             {
                 $ref = new ReflectionMethod(get_class($this->app), $method);
-                // dd(get_class_methods($ref));
 
                 $this->$method = function($det) use ($ref) {
                     return $ref->invoke($this->app, $det);
@@ -76,8 +75,7 @@ class Xero
     public function __call($method, $args)
     {
         if (isset($this->$method)) {
-            $func = $this->$method;
-            return call_user_func_array($func, $args);
+            return call_user_func_array($this->{$method}->bindTo($this),$args);
         }
     }
 
