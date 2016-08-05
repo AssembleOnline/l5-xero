@@ -39,6 +39,21 @@ class Xero
             case 'partner':
                 $this->app = new \XeroPHP\Application\PartnerApplication($this->config);
             break;
+            case 'invoice':
+                $this->app = new \XeroPHP\Models\Accounting\Invoice();
+            break;
+            case 'attachment':
+                $this->app = new \XeroPHP\Models\Accounting\Attachment();
+            break;
+            case 'lineItem':
+                $this->app = new \XeroPHP\Models\Accounting\LineItem();
+            break;
+            case 'contact':
+                $this->app = new \XeroPHP\Models\Accounting\Contact();
+            break;
+            case 'brandingTheme':
+                $this->app = new \XeroPHP\Models\Accounting\BrandingTheme();
+            break;
             default:
                 throw new Exception("Application type does not exist [$type]");
         }
@@ -49,18 +64,20 @@ class Xero
             if($method[0] !== '_')
             {
                 $ref = new ReflectionMethod(get_class($this->app), $method);
+                // dd(get_class_methods($ref));
 
-                $this->$method = function($args) use ($ref) {
-                    return $ref->invokeArgs($this->app, $args);
+                $this->$method = function($det) use ($ref) {
+                    return $ref->invoke($this->app, $det);
                 };
             }
         }
     }
 
     public function __call($method, $args)
-    {   
+    {
         if (isset($this->$method)) {
-            return call_user_func($this->{$method}->bindTo($this),$args);
+            $func = $this->$method;
+            return call_user_func_array($func, $args);
         }
     }
 
@@ -68,21 +85,6 @@ class Xero
     {
         $callable = get_object_vars($this);
         return array_keys($callable);
-    }
-
-    public function process($data)
-    {
-        switch (get_class($data)){
-            case 'XeroPHP\\Remote\\Query':
-                $data = $data;
-            break;
-            case 'XeroPHP\\Remote\\Collection':
-                $data = collect($data);
-            break;
-            default:
-                $data = $data;
-        }
-        return $data;
     }
 
 
@@ -99,55 +101,25 @@ class Xero
     {
         return new Xero('partner');
     }
-
-
-
-
-    /*
-    *
-    *   Shortcut Functions For Use In Quick load calls
-    *
-    */
-    public function invoice($guid = null, $page = null)
+    public static function invoice()
     {
-        if($guid == null)
-        {
-            if($page == null)
-                return $this->process($this->app->load('Accounting\\Invoice')->execute());
-            else
-                return $this->process($this->app->load('Accounting\\Invoice')->page($page)->execute()); 
-        }
-        return $this->process($this->app->loadByGUID('Accounting\\Invoice', $guid));
+        return new Xero('invoice');
     }
-
-    public function contact($guid = null, $page = null)
+    public static function attachment()
     {
-        if($guid == null)
-        {
-            if($page == null)
-                return $this->process($this->app->load('Accounting\\Contact')->execute());
-            else
-                return $this->process($this->app->load('Accounting\\Contact')->page($page)->execute()); 
-        }
-        return $this->process($this->app->loadByGUID('Accounting\\Contact', $guid));
+        return new Xero('attachment');
     }
-
-    public function item($guid = null)
+    public static function lineItem()
     {
-        if($guid == null)
-        {
-            return $this->process($this->app->load('Accounting\\Item')->execute()); 
-        }
-        return $this->process($this->app->loadByGUID('Accounting\\Item', $guid));
+        return new Xero('lineItem');
     }
-
-    public function attachment($guid = null)
+    public static function contact()
     {
-        if($guid == null)
-        {
-            return $this->process($this->app->load('Accounting\\Attachment')->execute()); 
-        }
-        return $this->process($this->app->loadByGUID('Accounting\\Attachment', $guid));
+        return new Xero('contact');
+    }
+    public static function brandingTheme()
+    {
+        return new Xero('brandingTheme');
     }
 
 }
