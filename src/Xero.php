@@ -64,10 +64,11 @@ class Xero
             if($method[0] !== '_')
             {
                 $ref = new ReflectionMethod(get_class($this->app), $method);
-                // dd(get_class_methods($ref));
 
-                $this->$method = function($det) use ($ref) {
-                    return $ref->invoke($this->app, $det);
+                $this->$method = function() use ($ref) {
+                    $params = func_get_args();
+                    array_unshift($params, $this->app);
+                    return call_user_func_array([$ref, 'invoke'], $params);
                 };
             }
         }
