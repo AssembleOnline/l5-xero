@@ -1,0 +1,72 @@
+Type
+Contact
+	ContactID
+	ContactNumber
+	AccountNumber
+	ContactStatus
+	Name
+	FirstName
+	LastName
+	EmailAddress
+	SkypeUserName
+	ContactPersons
+	BankAccountDetails
+	TaxNumber
+	AccountsReceivableTaxType
+	AccountsPayableTaxType
+	Addresses
+	Phones
+	IsSupplier
+	IsCustomer
+	DefaultCurrency
+	XeroNetworkKey
+	SalesDefaultAccountCode
+	PurchasesDefaultAccountCode
+	SalesTrackingCategories
+	PurchasesTrackingCategories
+	PaymentTerms
+	UpdatedDateUTC
+	ContactGroups
+	Website
+	BrandingTheme
+	BatchPayments
+	Discount
+	Balances
+	HasAttachments
+LineItems
+	Description
+	UnitAmount
+	TaxType
+	TaxAmount
+	LineAmount
+	AccountCode
+	Quantity
+	LineItemID
+Date
+DueDate
+LineAmountTypes
+InvoiceNumber
+Reference
+BrandingThemeID
+Url
+CurrencyCode
+CurrencyRate
+Status
+SentToContact
+ExpectedPaymentDate
+PlannedPaymentDate
+SubTotal
+TotalTax
+Total
+TotalDiscount
+InvoiceID
+HasAttachments
+Payments
+Prepayments
+Overpayments
+AmountDue
+AmountPaid
+FullyPaidOnDate
+AmountCredited
+UpdatedDateUTC
+CreditNotes

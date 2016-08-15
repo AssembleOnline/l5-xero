@@ -1,0 +1,112 @@
+Type
+Contact
+	ContactID
+	ContactNumber
+	AccountNumber
+	ContactStatus
+	Name
+	FirstName
+	LastName
+	EmailAddress
+	SkypeUserName
+	ContactPersons
+	BankAccountDetails
+	TaxNumber
+	AccountsReceivableTaxType
+	AccountsPayableTaxType
+	Addresses
+	Phones
+	IsSupplier
+	IsCustomer
+	DefaultCurrency
+	XeroNetworkKey
+	SalesDefaultAccountCode
+	PurchasesDefaultAccountCode
+	SalesTrackingCategories
+	PurchasesTrackingCategories
+	PaymentTerms
+	UpdatedDateUTC
+	ContactGroups
+	Website
+	BrandingTheme
+	BatchPayments
+	Discount
+	Balances
+	HasAttachments
+LineItems
+	Description
+	UnitAmount
+	TaxType
+	TaxAmount
+	LineAmount
+	AccountCode
+	Quantity
+	LineItemID
+Date
+DueDate
+LineAmountTypes
+InvoiceNumber
+Reference
+BrandingThemeID
+Url
+CurrencyCode
+CurrencyRate
+Status
+SentToContact
+ExpectedPaymentDate
+PlannedPaymentDate
+SubTotal
+TotalTax
+Total
+TotalDiscount
+InvoiceID
+HasAttachments
+Payments
+Prepayments
+Overpayments
+AmountDue
+AmountPaid
+FullyPaidOnDate
+AmountCredited
+UpdatedDateUTC
+CreditNotes
+
+
+
+
+---- just fields for db
+
+id: int(10)
+InvoiceID: varchar(255)
+Contact_id: int(10)
+Contact_guid: varchar(255)
+LineItems_id: int(10)
+LineItems_guid: varchar(255)
+BrandingThemeID: varchar(255)
+InvoiceNumber: varchar(50)
+Status: enum( 'DRAFT', 'SUBMITTED', 'AUTHORISED', 'DELETED', 'PAID', 'VOIDED' )
+Reference: varchar(255)
+Type: enum( 'ACCPAY', 'ACCREC' )
+LineAmountTypes: enum( 'Exclusive', 'Inclusive', 'NoTax' )
+Url: varchar(255)
+CurrencyCode: varchar(3)
+CurrencyRate: decimal(10,6)
+Total: decimal(10,2)
+TotalTax: decimal(10,2)
+SubTotal: decimal(10,2)
+TotalDiscount: decimal(10,2)
+Payments
+Prepayments
+Overpayments
+AmountDue
+AmountPaid
+AmountCredited
+HasAttachments
+SentToContact
+ExpectedPaymentDate
+PlannedPaymentDate
+FullyPaidOnDate
+Date
+DueDate
+UpdatedDateUTC
+CreditNotes
