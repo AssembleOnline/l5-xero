@@ -426,7 +426,27 @@ class CreateXeroTables extends Migration
     public function down()
     {
         Schema::drop($this->prefix.'line_items');
+        Schema::drop($this->prefix.'purchase_details');
+        Schema::drop($this->prefix.'sales_details');
+        Schema::drop($this->prefix.'items');
+        Schema::drop($this->prefix.'credit_notes');
+        Schema::drop($this->prefix.'prepayments');
+        Schema::drop($this->prefix.'overpayments');
+        Schema::drop($this->prefix.'payments');
+        Schema::drop($this->prefix.'allocations');
+        Schema::drop($this->prefix.'invoices');
+        Schema::drop($this->prefix.'line_items');
+        Schema::drop($this->prefix.'contact_persons');
+        Schema::drop($this->prefix.'addresses');
+        Schema::drop($this->prefix.'phones');
+        Schema::drop($this->prefix.'contacts');
+        Schema::drop($this->prefix.'contact_groups');
+        
+        
     }
+
+
+
 
     private function createLink($table, $table2)
     {
