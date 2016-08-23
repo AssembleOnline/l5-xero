@@ -1,20 +1,33 @@
 <?php
-// src/migrations/0000_00_00_000000_create_xero_tables.php
+// src/migrations/0000_00_00_000000_create_lfivezero_tables.php
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
 class CreateXeroTables extends Migration
 {
-    private $prefix = 'lfivexero';
+    private $prefix = 'lfivexero_';
 
     public function up()
     {
 
         $LineAmountTypes = ['Exclusive', 'Inclusive', 'NoTax'];
+        
         $Status = ['DRAFT', 'SUBMITTED', 'AUTHORISED', 'DELETED'];
+        
         $PaymentType = ['ACCRECPAYMENT', 'ACCPAYPAYMENT', 'ARCREDITPAYMENT', 'APCREDITPAYMENT', 'AROVERPAYMENTPAYMENT', 'ARPREPAYMENTPAYMENT', 'APPREPAYMENTPAYMENT', 'APOVERPAYMENTPAYMENT'];
+        
+        $PrePaymentType = ['RECEIVE-PREPAYMENT', 'SPEND-PREPAYMENT'];
+        $PrePaymentStatus = ['AUTHORISED', 'PAID', 'VOIDED'];
+        
+        $OverPaymentType = ['RECEIVE-OVERPAYMENT', 'SPEND-OVERPAYMENT'];
+        $OverPaymentStatus = ['AUTHORISED', 'PAID', 'VOIDED'];
+        
+        $CreditNoteType = ['ACCPAYCREDIT', 'ACCRECCREDIT'];
+        $CreditNoteStatus = ['DRAFT', 'SUBMITTED', 'DELETED', 'AUTHORISED', 'PAID', 'VOIDED'];
+
         $ContactStatus = ['ACTIVE', 'ARCHIVED'];
+        
         $AddressType = ['POBOX', 'STREET', 'DELIVERY'];
         $PhoneType = ['DEFAULT', 'DDI', 'MOBILE', 'FAX'];
 
@@ -32,7 +45,6 @@ class CreateXeroTables extends Migration
             $t->varchar('TaxType', 50)->nullable();
 
             $t->timestamps();
-
         });
 
         /*
@@ -48,7 +60,6 @@ class CreateXeroTables extends Migration
             $t->varchar('TaxType', 50)->nullable();
 
             $t->timestamps();
-
         });
 
         /*
@@ -72,21 +83,111 @@ class CreateXeroTables extends Migration
             $t->dateTime('UpdatedDateUTC')->nullable();
 
             $t->timestamps();
-
         });
 
+        /*
+        *   Setup The <CreditNote> element
+        */
+        Schema::create($this->prefix.'credit_notes', function(Blueprint $t)
+        {
+            $t->increments('id')->unsigned();
+
+            $t->enum('Type', $CreditNoteType)->nullable();
+            $t->varchar('Date')->nullable();
+            $t->enum('Status', $CreditNoteStatus)->nullable();
+            $t->enum('LineAmountTypes', $LineAmountTypes)->nullable();
+            $t->decimal('SubTotal', 10, 4)->nullable();
+            $t->decimal('TotalTax', 10, 4)->nullable();
+            $t->decimal('Total', 10, 4)->nullable();
+            $t->timestamp('UpdatedDateUTC')->nullable();
+            $t->varchar('CurrencyCode')->nullable();
+            $t->varchar('FullyPaidOnDate')->nullable();
+            $t->varchar('CreditNoteID')->nullable();
+            $t->varchar('CreditNoteNumber')->nullable();
+            $t->varchar('Reference')->nullable();
+            $t->boolean('SentToContact')->nullable();
+            $t->decimal('CurrencyRate', 10, 4)->nullable();
+            $t->varchar('RemainingCredit')->nullable();
+            $t->varchar('BrandingThemeID')->nullable();
+            $t->boolean('HasAttachments')->nullable();
+
+            $t->int('Contact_id')->unsigned()->nullable();
+            // $t->varchar('Allocations')->nullable();
+            // $t->varchar('LineItems')->nullable();
+
+            $t->timestamps();
+        });
 
         /*
-        *   Setup The <Invoice> element
+        *   Setup The <Overpayment> element
+        */
+        Schema::create($this->prefix.'prepayments', function(Blueprint $t)
+        {
+            $t->increments('id')->unsigned();
+
+            $t->varchar('Reference')->nullable();
+            $t->varchar('OverpaymentID')->nullable();
+            $t->enum('Type', $PrePaymentType)->nullable();
+            $t->date('Date')->nullable();
+            $t->enum('Status', $PrePaymentStatus)->nullable();
+            $t->varchar('LineAmountTypes')->nullable();
+            $t->decimal('SubTotal', 10, 4)->nullable();
+            $t->decimal('TotalTax', 10, 4)->nullable();
+            $t->decimal('Total', 10, 4)->nullable();
+            $t->timestamp('UpdatedDateUTC')->nullable();
+            $t->varchar('CurrencyCode')->nullable();
+            $t->varchar('FullyPaidOnDate')->nullable();
+            $t->decimal('CurrencyRate', 10, 4)->nullable();
+            $t->varchar('RemainingCredit', 255)->nullable();
+            $t->boolean('HasAttachments')->nullable();
+            
+            //Many
+            $t->int('Contact_id')->unsigned()->nullable();
+            // $t->varchar('LineItems')->nullable();
+            // $t->varchar('Allocations')->nullable();
+            // $t->varchar('Payments')->nullable();
+            
+            $t->timestamps();
+        });
+
+        /*
+        *   Setup The <Overpayment> element
+        */
+        Schema::create($this->prefix.'overpayments', function(Blueprint $t)
+        {
+            $t->increments('id')->unsigned();
+
+            $t->varchar('Reference')->nullable();
+            $t->varchar('OverpaymentID')->nullable();
+            $t->enum('Type', $OverPaymentType)->nullable();
+            $t->date('Date')->nullable();
+            $t->enum('Status', $OverPaymentStatus)->nullable();
+            $t->varchar('LineAmountTypes')->nullable();
+            $t->decimal('SubTotal', 10, 4)->nullable();
+            $t->decimal('TotalTax', 10, 4)->nullable();
+            $t->decimal('Total', 10, 4)->nullable();
+            $t->timestamp('UpdatedDateUTC')->nullable();
+            $t->varchar('CurrencyCode')->nullable();
+            $t->varchar('FullyPaidOnDate')->nullable();
+            $t->decimal('CurrencyRate', 10, 4)->nullable();
+            $t->varchar('RemainingCredit', 255)->nullable();
+            $t->boolean('HasAttachments')->nullable();
+            
+            //Many
+            $t->int('Contact_id')->unsigned()->nullable();
+            // $t->varchar('LineItems')->nullable();
+            // $t->varchar('Allocations')->nullable();
+            // $t->varchar('Payments')->nullable();
+            
+            $t->timestamps();
+        });
+
+        /*
+        *   Setup The <Payment> element
         */
         Schema::create($this->prefix.'payments', function(Blueprint $t)
         {
             $t->increments('id')->unsigned();
-
-            /* Invoice -- Many Relation */
-            /* CreditNote -- Many Relation */
-            /* Prepayment -- Many Relation */
-            /* Overpayment -- Many Relation */
 
             $t->int('Account_id')->unsigned()->nullable();
 
@@ -95,23 +196,38 @@ class CreateXeroTables extends Migration
             $t->decimal('Amount', 10, 4);
             $t->varchar('Reference')->nullable();
             $t->varchar('IsReconciled')->nullable();
-            $t->varchar('Status')->enum($Status);
-            $t->varchar('PaymentType')->enum($PaymentType);
+            $t->enum('Status', $Status)->nullable();
+            $t->enum('PaymentType', $PaymentType);
             $t->datetime('UpdatedDateUTC')->nullable();
             $t->varchar('PaymentID')->nullable();
 
+            /* Invoice -- Many Relation */
+            /* CreditNote -- Many Relation */
+            /* Prepayment -- Many Relation */
+            /* Overpayment -- Many Relation */
+
+            $t->int('Invoice_id')->unsigned()->nullable();
+            $t->int('CreditNote_id')->unsigned()->nullable();
+            $t->int('Prepayment_id')->unsigned()->nullable();
+            $t->int('Overpayment_id')->unsigned()->nullable();
 
             $t->timestamps();
+        });
+
+        /*
+        *   Allocations
+        */
+        Schema::create($this->prefix.'allocations', function(Blueprint $t)
+        {
+            $t->increments('id')->unsigned();
+
+            $t->decimal('AppliedAmount', 10, 4)->nullable();
+            $t->dateTime('Date')->nullable();
+
+            $t->integer('Invoice_id')->unsigned();
 
         });
-        // Schema::table($this->prefix.'payments', function($table) {
-        //     $table->foreign('Invoice')->references('id')->on($this->prefix.'invoices');
-        //     $table->foreign('CreditNote')->references('ItemCode')->on($this->prefix.'items');
-        //     $table->foreign('Prepayment')->references('')->on($this->prefix.'');
-        //     $table->foreign('Overpayment')->references('')->on($this->prefix.'');
-        // });
-
-
+       
         /*
         *   Setup The <Invoice> element
         */
@@ -147,7 +263,6 @@ class CreateXeroTables extends Migration
             $t->decimal('AmountCredited', 10, 4)->nullable();
             $t->dateTime('UpdatedDateUTC')->nullable();
 
-
             $t->int('Payments_id')->unsigned()->nullable();
             $t->int('Prepayments_id')->unsigned()->nullable();
             $t->int('Overpayments_id')->unsigned()->nullable();
@@ -155,17 +270,8 @@ class CreateXeroTables extends Migration
 
 
             $t->timestamps();
-
         });
-        Schema::table($this->prefix.'invoices', function($table) {
-            $table->foreign('Payments_id')->references('id')->on($this->prefix.'invoices');
-            $table->foreign('Prepayments_id')->references('id')->on($this->prefix.'prepayments');
-            $table->foreign('Overpayments_id')->references('id')->on($this->prefix.'overpayments');
-            $table->foreign('CreditNotes_id')->references('id')->on($this->prefix.'creditnotes');
-        });
-
-
-
+        
         /*
         *   Setup The <LineItem> element to be used for <Invoice> in xero.
         */
@@ -186,14 +292,10 @@ class CreateXeroTables extends Migration
 
             
             $t->int('Invoice_id')->unsigned();
+            $t->int('Item_id')->unsigned();
 
 
             $t->timestamps();
-
-        });
-        Schema::table($this->prefix.'line_items', function($table) {
-           $table->foreign('Invoice_id')->references('id')->on($this->prefix.'invoices');
-           $table->foreign('ItemCode')->references('ItemCode')->on($this->prefix.'items');
         });
 
         /*
@@ -209,7 +311,6 @@ class CreateXeroTables extends Migration
 
 
             $t->timestamps();
-
         });
 
         /*
@@ -246,23 +347,6 @@ class CreateXeroTables extends Migration
 
 
             $t->timestamps();
-        });
-
-        /*
-        *   Setup The <Invoice> element
-        */
-        Schema::create($this->prefix.'contacts', function(Blueprint $t)
-        {
-            $t->increments('id')->unsigned();
-            $t->varchar('Name')->nullable();
-            $t->varchar('Status')->nullable();
-            $t->varchar('ContactGroupID')->nullable();
-            
-            /* Contacts -- Many Relationship */
-
-
-            $t->timestamps();
-
         });
 
         /*
@@ -312,15 +396,30 @@ class CreateXeroTables extends Migration
 
 
             $t->timestamps();
-
         });
+
+        /*
+        *   Setup The <Invoice> element
+        */
+        Schema::create($this->prefix.'contact_groups', function(Blueprint $t)
+        {
+            $t->increments('id')->unsigned();
+            
+            $t->varchar('Name')->nullable();
+            $t->varchar('Status')->nullable();
+            $t->varchar('ContactGroupID')->nullable();
+            
+            $t->timestamps();
+        });
+
         //Add One to Many Relations
         $this->createLink('contacts', 'contact_persons');
         $this->createLink('contacts', 'addresses');
         $this->createLink('contacts', 'phones');
 
         //Add Many to Many Relations
-        $this->createLink('contacts', 'contact_groups');
+        $this->createLink('contact_groups', 'contacts');
+        
 
     }
 
@@ -333,9 +432,10 @@ class CreateXeroTables extends Migration
     {
         Schema::create($this->prefix.$table.'_'.$table2, function($table) {
             $table->increments('id');
-            $table->integer($this->prefix.$table);
-            $table->integer($this->prefix.$table2);
+            $table->integer($table.'_id');
+            $table->integer($table2.'_id');
             $table->timestamps();
         });
     }
+
 }
