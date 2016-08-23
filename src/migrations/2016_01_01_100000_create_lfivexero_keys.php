@@ -1,10 +1,10 @@
 <?php
-// src/migrations/0000_00_00_000000_create_xero_tables.php
+// src/migrations/0000_00_00_000000_create_xero_keys.php
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateXeroTables extends Migration
+class CreateLfivexeroKeys extends Migration
 {
     private $prefix = 'lfivexero_';
 
@@ -44,12 +44,16 @@ class CreateXeroTables extends Migration
             $table->foreign('Payments_id')->references('id')->on($this->prefix.'invoices');
             $table->foreign('Prepayments_id')->references('id')->on($this->prefix.'prepayments');
             $table->foreign('Overpayments_id')->references('id')->on($this->prefix.'overpayments');
-            $table->foreign('CreditNotes_id')->references('id')->on($this->prefix.'creditnotes');
+            $table->foreign('CreditNotes_id')->references('id')->on($this->prefix.'credit_notes');
         });
         //Invoice Line Items
         Schema::table($this->prefix.'line_items', function($table) {
            $table->foreign('Invoice_id')->references('id')->on($this->prefix.'invoices');
            $table->foreign('Item_id')->references('id')->on($this->prefix.'items');
+        });
+        //Allocations
+        Schema::table($this->prefix.'allocations', function($table) {
+           $table->foreign('Invoice_id')->references('id')->on($this->prefix.'invoices');
         });
 
 
@@ -57,7 +61,7 @@ class CreateXeroTables extends Migration
         *   Payments Foreign Keys
         */
         Schema::table($this->prefix.'payments', function($table) {
-            $table->foreign('Account_id')->references('id')->on($this->prefix.'accounts');
+            // $table->foreign('Account_id')->references('id')->on($this->prefix.'accounts'); // adding account tracking in future
             $table->foreign('Invoice_id')->references('id')->on($this->prefix.'invoices');
             $table->foreign('CreditNote_id')->references('id')->on($this->prefix.'items');
             $table->foreign('Prepayment_id')->references('id')->on($this->prefix.'prepayments');
@@ -82,7 +86,7 @@ class CreateXeroTables extends Migration
 
     public function down()
     {
-        
+
     }
 
     

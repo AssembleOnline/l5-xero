@@ -14,6 +14,7 @@ class XeroServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->setupConfig();
+        $this->setupMigrations();
     }
 
 
@@ -29,6 +30,18 @@ class XeroServiceProvider extends ServiceProvider
         $this->publishes([ $source => config_path('xero.php') ]);
 
         $this->mergeConfigFrom($source, 'xero');
+    }
+
+    /**
+    *   Setup the migrations
+    *   
+    *   @return void
+    */
+    protected function setupMigrations()
+    {
+        $source = realpath(__DIR__.'/migrations');
+
+        $this->publishes([ $source => $this->app->databasePath().'/migrations' ]);
     }
 
     /**
