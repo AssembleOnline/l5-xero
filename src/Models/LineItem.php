@@ -1,18 +1,17 @@
 <?php
-namespace \Assemble\l5xero\Models;
+namespace Assemble\l5xero\Models;
 
 use \Illuminate\Database\Eloquent\Model as Eloquent;
 
 class LineItem extends Eloquent {
     
-    private $prefix = 'lfivexero_';
 
 	 /**
      * The database table used by the model.
      *
      * @var string
      */
-    protected $table = $prefix.'line_items';
+    protected $table = 'lfivexero_line_items';
 
     /**
      * The attributes that are mass assignable.
@@ -36,7 +35,7 @@ class LineItem extends Eloquent {
 
     public function Item()
     {
-    	return $this->belongsTo('\Assemble\l5xero\Models\Item');
+    	return $this->belongsTo('Assemble\l5xero\Models\Item');
     }
 
 

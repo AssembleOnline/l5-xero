@@ -1,18 +1,16 @@
 <?php
-namespace \Assemble\l5xero\Models;
+namespace Assemble\l5xero\Models;
 
 use \Illuminate\Database\Eloquent\Model as Eloquent;
 
 class PurchaseDetail extends Eloquent {
-    
-    private $prefix = 'lfivexero_';
 
 	 /**
      * The database table used by the model.
      *
      * @var string
      */
-    protected $table = $prefix.'sales_details';
+    protected $table = 'lfivexero_sales_details';
 
     /**
      * The attributes that are mass assignable.
@@ -29,7 +27,7 @@ class PurchaseDetail extends Eloquent {
 
     public function item()
     {
-    	return $this->hasOne('\Assemble\l5xero\Models\Item');
+    	return $this->hasOne('Assemble\l5xero\Models\Item');
     }
 
 }

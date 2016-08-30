@@ -1,18 +1,16 @@
 <?php
-namespace \Assemble\l5xero\Models;
+namespace Assemble\l5xero\Models;
 
 use \Illuminate\Database\Eloquent\Model as Eloquent;
 
-class Phone extends Eloquent {
-    
-    private $prefix = 'lfivexero_';
+class ContactPerson extends Eloquent {
 
 	 /**
      * The database table used by the model.
      *
      * @var string
      */
-    protected $table = $prefix.'phones';
+    protected $table = 'lfivexero_contact_persons';
 
     /**
      * The attributes that are mass assignable.
@@ -20,16 +18,16 @@ class Phone extends Eloquent {
      * @var array
      */
     protected $fillable = [
-      'PhoneType',
-      'PhoneNumber',
-      'PhoneAreaCode',
-      'PhoneCountryCode',
+		'FirstName',
+		'LastName',
+		'EmailAddress',
+		'IncludeInEmails',
     ];
 
 
    	public function contact()
    	{
-   		return $this->hasOne('\Assemble\l5xero\Contact');
+   		return $this->belongsTo('Assemble\l5xero\Models\Contact');
    	}
 
 }

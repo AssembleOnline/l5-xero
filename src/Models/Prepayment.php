@@ -1,18 +1,16 @@
 <?php
-namespace \Assemble\l5xero\Models;
+namespace Assemble\l5xero\Models;
 
 use \Illuminate\Database\Eloquent\Model as Eloquent;
 
 class Prepayment extends Eloquent {
-    
-    private $prefix = 'lfivexero_';
 
 	 /**
      * The database table used by the model.
      *
      * @var string
      */
-    protected $table = $prefix.'prepayments';
+    protected $table = 'lfivexero_prepayments';
 
     /**
      * The attributes that are mass assignable.
@@ -41,17 +39,17 @@ class Prepayment extends Eloquent {
 
    	public function contact()
    	{
-   		return $this->belongsTo('\Assemble\l5xero\Contact');
+   		return $this->belongsTo('Assemble\l5xero\Contact');
    	}
 
    	public function payment()
    	{
-   		return $this->hasOne('\Assemble\l5xero\Payment');
+   		return $this->hasOne('Assemble\l5xero\Payment');
    	}
 
     public function allocation()
     {
-      return $this->belongsTo('\Assemble\l5xero\Allocation')
+      return $this->belongsTo('Assemble\l5xero\Allocation')
     }
 
 }

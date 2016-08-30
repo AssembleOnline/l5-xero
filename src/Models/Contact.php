@@ -1,18 +1,16 @@
 <?php
-namespace \Assemble\l5xero\Models;
+namespace Assemble\l5xero\Models;
 
 use \Illuminate\Database\Eloquent\Model as Eloquent;
 
 class Contact extends Eloquent {
     
-    private $prefix = 'lfivexero_';
-
 	 /**
      * The database table used by the model.
      *
      * @var string
      */
-    protected $table = $prefix.'contacts';
+    protected $table = 'lfivexero_contacts';
 
     /**
      * The attributes that are mass assignable.
@@ -50,27 +48,27 @@ class Contact extends Eloquent {
 
     public function contact_group()
     {
-    	return $this->belongsTo('\Assemble\l5xero\Models\ContactGroup');
+    	return $this->belongsTo('Assemble\l5xero\Models\ContactGroup');
     }
 
    	public function contact_persons()
    	{
-   		return $this->hasMany('\Assemble\l5xero\Models\ContactPerson');
+   		return $this->hasMany('Assemble\l5xero\Models\ContactPerson');
    	}
 
    	public function addresses()
    	{
-   		return $this->hasMany('\Assemble\l5xero\Models\Address');
+   		return $this->hasMany('Assemble\l5xero\Models\Address');
    	}
 
    	public function phones()
    	{
-   		return $this->hasMany('\Assemble\l5xero\Models\Phones');
+   		return $this->hasMany('Assemble\l5xero\Models\Phones');
    	}
 
    	public function invoices()
    	{
-   		return $this->hasMany('\Assemble\l5xero\Models\Invoice');
+   		return $this->hasMany('Assemble\l5xero\Models\Invoice');
    	}
 
 }

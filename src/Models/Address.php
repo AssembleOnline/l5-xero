@@ -1,18 +1,16 @@
 <?php
-namespace \Assemble\l5xero\Models;
+namespace Assemble\l5xero\Models;
 
 use \Illuminate\Database\Eloquent\Model as Eloquent;
 
 class Address extends Eloquent {
     
-    private $prefix = 'lfivexero_';
-
 	 /**
      * The database table used by the model.
      *
      * @var string
      */
-    protected $table = $prefix.'addresses';
+    protected $table = 'lfivexero_addresses';
 
     /**
      * The attributes that are mass assignable.
@@ -35,7 +33,7 @@ class Address extends Eloquent {
 
    	public function contact()
    	{
-   		return $this->hasOne('\Assemble\l5xero\Models\Contact');
+   		return $this->hasOne('Assemble\l5xero\Models\Contact');
    	}
 
 }

@@ -1,18 +1,16 @@
 <?php
-namespace \Assemble\l5xero\Models;
+namespace Assemble\l5xero\Models;
 
 use \Illuminate\Database\Eloquent\Model as Eloquent;
 
 class CreditNote extends Eloquent {
-    
-    private $prefix = 'lfivexero_';
 
 	 /**
      * The database table used by the model.
      *
      * @var string
      */
-    protected $table = $prefix.'credit_notes';
+    protected $table = 'lfivexero_credit_notes';
 
     /**
      * The attributes that are mass assignable.
@@ -44,17 +42,17 @@ class CreditNote extends Eloquent {
 
    	public function contact()
    	{
-   		return $this->belongsTo('\Assemble\l5xero\Models\Contact');
+   		return $this->belongsTo('Assemble\l5xero\Models\Contact');
    	}
 
    	public function payment()
    	{
-   		return $this->hasOne('\Assemble\l5xero\Models\Payment');
+   		return $this->hasOne('Assemble\l5xero\Models\Payment');
    	}
 
     public function allocation()
     {
-      return $this->belongsTo('\Assemble\l5xero\Models\Allocation');
+      return $this->belongsTo('Assemble\l5xero\Models\Allocation');
     }
 
 }

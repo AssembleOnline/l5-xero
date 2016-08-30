@@ -1,18 +1,16 @@
 <?php
-namespace \Assemble\l5xero\Models;
+namespace Assemble\l5xero\Models;
 
 use \Illuminate\Database\Eloquent\Model as Eloquent;
 
 class Invoice extends Eloquent {
-    
-    private $prefix = 'lfivexero_';
-
+	
 	 /**
      * The database table used by the model.
      *
      * @var string
      */
-    protected $table = $prefix.'invoices';
+    protected $table = 'lfivexero_invoices';
 
     /**
      * The attributes that are mass assignable.
@@ -54,17 +52,17 @@ class Invoice extends Eloquent {
 
     public function payments()
     {
-    	return $this->hasMany('\Assemble\l5xero\Models\Payment');
+    	return $this->hasMany('Assemble\l5xero\Models\Payment');
     }
 
     public function allocations()
     {
-    	return $this->hasMany('\Assemble\l5xero\Models\Allocation');
+    	return $this->hasMany('Assemble\l5xero\Models\Allocation');
     }
 
     public function line_items()
     {
-    	return $this->hasMany('\Assemble\l5xero\Models\LineItem');
+    	return $this->hasMany('Assemble\l5xero\Models\LineItem');
     }
 
 }

@@ -14,6 +14,9 @@
     "require": {
         "calcinai/xero-php": "1.3.*"
     },
+    "classmap": {
+        
+    },
     "autoload": {
         "psr-4": {
             "Assemble\\l5xero\\": "src"

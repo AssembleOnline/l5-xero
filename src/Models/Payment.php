@@ -1,18 +1,16 @@
 <?php
-namespace \Assemble\l5xero\Models;
+namespace Assemble\l5xero\Models;
 
 use \Illuminate\Database\Eloquent\Model as Eloquent;
 
 class Payment extends Eloquent {
-    
-    private $prefix = 'lfivexero_';
 
 	 /**
      * The database table used by the model.
      *
      * @var string
      */
-    protected $table = $prefix.'payments';
+    protected $table = 'lfivexero_payments';
 
     /**
      * The attributes that are mass assignable.
@@ -39,27 +37,27 @@ class Payment extends Eloquent {
 
    	public function account()
    	{
-   		return $this->belongsTo('\Assemble\l5xero\Account');
+   		return $this->belongsTo('Assemble\l5xero\Account');
    	}
 
    	public function invoice()
    	{
-   		return $this->belongsTo('\Assemble\l5xero\Invoice');
+   		return $this->belongsTo('Assemble\l5xero\Invoice');
    	}
 
    	public function credit_note()
    	{
-   		return $this->belongsTo('\Assemble\l5xero\CreditNote');
+   		return $this->belongsTo('Assemble\l5xero\CreditNote');
    	}
 
    	public function prepayment()
    	{
-   		return $this->belongsTo('\Assemble\l5xero\Prepayment');
+   		return $this->belongsTo('Assemble\l5xero\Prepayment');
    	}
 
    	public function overpayment()
    	{
-   		return $this->belongsTo('\Assemble\l5xero\Overpayment');
+   		return $this->belongsTo('Assemble\l5xero\Overpayment');
    	}
 
 }
