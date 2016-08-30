@@ -49,7 +49,7 @@ class Prepayment extends Eloquent {
 
     public function allocation()
     {
-      return $this->belongsTo('Assemble\l5xero\Allocation')
+      return $this->belongsTo('Assemble\l5xero\Allocation');
     }
 
 }

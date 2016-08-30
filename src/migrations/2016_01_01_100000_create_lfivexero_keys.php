@@ -49,7 +49,7 @@ class CreateLfivexeroKeys extends Migration
         //Invoice Line Items
         Schema::table($this->prefix.'line_items', function($table) {
            $table->foreign('Invoice_id')->references('id')->on($this->prefix.'invoices');
-           $table->foreign('Item_id')->references('id')->on($this->prefix.'items');
+           // $table->foreign('Item_id')->references('id')->on($this->prefix.'items');
         });
         //Allocations
         Schema::table($this->prefix.'allocations', function($table) {

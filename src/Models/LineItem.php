@@ -30,7 +30,6 @@ class LineItem extends Eloquent {
 		'LineAmount',
 		'DiscountRate',
 		'Invoice_id',
-		'Item_id',
     ];
 
     public function Item()

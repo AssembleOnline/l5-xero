@@ -10,7 +10,7 @@ class PurchaseDetail extends Eloquent {
      *
      * @var string
      */
-    protected $table = 'lfivexero_puchase_details';
+    protected $table = 'lfivexero_purchase_details';
 
     /**
      * The attributes that are mass assignable.

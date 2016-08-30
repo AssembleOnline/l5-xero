@@ -19,7 +19,6 @@ class Invoice extends Eloquent {
      */
     protected $fillable = [
     	'Type',
-		'Contact_id',
 		'Date',
 		'DueDate',
 		'LineAmountTypes',
@@ -44,10 +43,6 @@ class Invoice extends Eloquent {
 		'FullyPaidOnDate',
 		'AmountCredited',
 		'UpdatedDateUTC',
-		'Payments_id',
-		'Prepayments_id',
-		'Overpayments_id',
-		'CreditNotes_id',
     ];
 
     public function payments()

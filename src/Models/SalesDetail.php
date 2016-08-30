@@ -3,7 +3,7 @@ namespace Assemble\l5xero\Models;
 
 use \Illuminate\Database\Eloquent\Model as Eloquent;
 
-class PurchaseDetail extends Eloquent {
+class SalesDetail extends Eloquent {
 
 	 /**
      * The database table used by the model.

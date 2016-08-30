@@ -197,7 +197,7 @@ class CreateLfivexeroTables extends Migration
             $t->string('Reference')->nullable();
             $t->string('IsReconciled')->nullable();
             $t->enum('Status', $Status)->nullable();
-            $t->enum('PaymentType', $PaymentType);
+            $t->enum('PaymentType', $PaymentType)->nullable();
             $t->datetime('UpdatedDateUTC')->nullable();
             $t->string('PaymentID')->nullable();
 
@@ -292,7 +292,6 @@ class CreateLfivexeroTables extends Migration
 
             
             $t->integer('Invoice_id')->unsigned();
-            $t->integer('Item_id')->unsigned();
 
 
             $t->timestamps();
