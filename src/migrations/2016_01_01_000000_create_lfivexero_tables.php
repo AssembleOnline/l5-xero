@@ -6,7 +6,12 @@ use Illuminate\Database\Migrations\Migration;
 
 class CreateLfivexeroTables extends Migration
 {
-    private $prefix = 'lfivexero_';
+    private $prefix = '';
+
+    public function __construct()
+    {
+        $this->prefix = config('xero.prefix');
+    }
 
     public function up()
     {
@@ -308,6 +313,8 @@ class CreateLfivexeroTables extends Migration
             $t->string('EmailAddress', 50)->nullable();
             $t->boolean('IncludeInEmails', 50)->nullable();
 
+            $t->integer('Contact_id')->unsigned()->nullable();
+
 
             $t->timestamps();
         });
@@ -329,6 +336,8 @@ class CreateLfivexeroTables extends Migration
             $t->string('Country')->nullable();
             $t->string('AttentionTo')->nullable();
 
+            $t->integer('Contact_id')->unsigned()->nullable();
+
 
             $t->timestamps();
         });
@@ -343,6 +352,8 @@ class CreateLfivexeroTables extends Migration
             $t->string('PhoneNumber')->nullable();
             $t->string('PhoneAreaCode')->nullable();
             $t->string('PhoneCountryCode')->nullable();
+
+            $t->integer('Contact_id')->unsigned()->nullable();
 
 
             $t->timestamps();
@@ -382,6 +393,7 @@ class CreateLfivexeroTables extends Migration
 
             $t->integer('BrandingTheme_id')->unsigned()->nullable();
 
+
             /* ContactPersons -- Many Relationship */
             /* Addresses -- Many Relationship */
             /* Phones -- Many Relationship */
@@ -412,9 +424,9 @@ class CreateLfivexeroTables extends Migration
         });
 
         //Add One to Many Relations
-        $this->createLink('contacts', 'contact_persons');
-        $this->createLink('contacts', 'addresses');
-        $this->createLink('contacts', 'phones');
+        // $this->createLink('contacts', 'contact_persons');
+        // $this->createLink('contacts', 'addresses');
+        // $this->createLink('contacts', 'phones');
 
         //Add Many to Many Relations
         $this->createLink('contact_groups', 'contacts');
@@ -425,9 +437,9 @@ class CreateLfivexeroTables extends Migration
     public function down()
     {
         //Add One to Many Relations
-        $this->dropLink('contacts', 'contact_persons');
-        $this->dropLink('contacts', 'addresses');
-        $this->dropLink('contacts', 'phones');
+        // $this->dropLink('contacts', 'contact_persons');
+        // $this->dropLink('contacts', 'addresses');
+        // $this->dropLink('contacts', 'phones');
 
         //Add Many to Many Relations
         $this->dropLink('contact_groups', 'contacts');

@@ -1,17 +1,22 @@
 <?php
 namespace Assemble\l5xero\Models;
 
-use \Illuminate\Database\Eloquent\Model as Eloquent;
+use Assemble\l5xero\Models\Model as Model;
 
-class Overpayment extends Eloquent {
+class Overpayment extends Model {
 
 	 /**
      * The database table used by the model.
      *
      * @var string
      */
-    protected $table = 'lfivexero_overpayments';
+    protected $table = 'overpayments';
 
+    public function __construct()
+    {
+        $this->table = config('xero.prefix').$this->table;
+    }
+    
     /**
      * The attributes that are mass assignable.
      *

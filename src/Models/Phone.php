@@ -1,17 +1,22 @@
 <?php
 namespace Assemble\l5xero\Models;
 
-use \Illuminate\Database\Eloquent\Model as Eloquent;
+use Assemble\l5xero\Models\Model as Model;
 
-class Phone extends Eloquent {
+class Phone extends Model {
 
 	 /**
      * The database table used by the model.
      *
      * @var string
      */
-    protected $table = 'lfivexero_phones';
+    protected $table = 'phones';
 
+    public function __construct()
+    {
+        $this->table = config('xero.prefix').$this->table;
+    }
+    
     /**
      * The attributes that are mass assignable.
      *
@@ -22,6 +27,7 @@ class Phone extends Eloquent {
       'PhoneNumber',
       'PhoneAreaCode',
       'PhoneCountryCode',
+      'Contact_id',
     ];
 
 

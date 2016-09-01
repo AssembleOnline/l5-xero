@@ -1,16 +1,17 @@
 <?php
 namespace Assemble\l5xero\Models;
 
-use \Illuminate\Database\Eloquent\Model as Eloquent;
+use Assemble\l5xero\Models\Model as Model;
 
-class ContactGroup extends Eloquent {
+class ContactGroup extends Model {
     
 	 /**
      * The database table used by the model.
      *
      * @var string
      */
-    protected $table = 'lfivexero_contact_groups';
+    protected $table = 'contact_groups';
+    
 
     /**
      * The attributes that are mass assignable.
@@ -18,11 +19,22 @@ class ContactGroup extends Eloquent {
      * @var array
      */
     protected $fillable = [
-		'Name',
-		'Status',
-		'ContactGroupID',
+    'Name',
+    'Status',
+    'ContactGroupID',
     ];
 
+    /**
+     * The attributes that are required.
+     *
+     * @var array
+     */
+    public $required = 
+
+    public function __construct()
+    {
+        $this->table = config('xero.prefix').$this->table;
+    }
 
    	public function contacts()
    	{

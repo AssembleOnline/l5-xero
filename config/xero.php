@@ -11,7 +11,9 @@ return [
         'consumer_secret'   => 'YOURSECRETKEY',
         'rsa_private_key'  	=> 'privatekey.pem',
         'rsa_public_key'   	=> 'publickey.cer'
-    ]
+    ],
+
+    'prefix' => 'lfivexero_',
 
 
 ];

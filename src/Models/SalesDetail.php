@@ -1,17 +1,22 @@
 <?php
 namespace Assemble\l5xero\Models;
 
-use \Illuminate\Database\Eloquent\Model as Eloquent;
+use Assemble\l5xero\Models\Model as Model;
 
-class SalesDetail extends Eloquent {
+class SalesDetail extends Model {
 
 	 /**
      * The database table used by the model.
      *
      * @var string
      */
-    protected $table = 'lfivexero_sales_details';
+    protected $table = 'sales_details';
 
+    public function __construct()
+    {
+        $this->table = config('xero.prefix').$this->table;
+    }
+    
     /**
      * The attributes that are mass assignable.
      *

@@ -1,9 +1,9 @@
 <?php
 namespace Assemble\l5xero\Models;
 
-use \Illuminate\Database\Eloquent\Model as Eloquent;
+use Assemble\l5xero\Models\Model as Model;
 
-class LineItem extends Eloquent {
+class LineItem extends Model {
     
 
 	 /**
@@ -11,8 +11,13 @@ class LineItem extends Eloquent {
      *
      * @var string
      */
-    protected $table = 'lfivexero_line_items';
+    protected $table = 'line_items';
 
+    public function __construct()
+    {
+        $this->table = config('xero.prefix').$this->table;
+    }
+    
     /**
      * The attributes that are mass assignable.
      *

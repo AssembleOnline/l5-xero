@@ -6,6 +6,11 @@ use Illuminate\Support\ServiceProvider;
 
 class XeroServiceProvider extends ServiceProvider
 {
+
+    protected $commands = [
+        'Assemble\l5xero\Commands\XeroUpdateAll',
+    ];
+
     /**
      * Bootstrap the application services.
      *
@@ -17,6 +22,22 @@ class XeroServiceProvider extends ServiceProvider
         $this->setupMigrations();
     }
 
+    /**
+     * Register the application services.
+     *
+     * @return void
+     */
+    public function register()
+    {
+
+        $this->app->bind('xero', function () {
+            return new Xero;
+        });
+
+        $this->commands($this->commands);
+
+       
+    }
 
     /**
      * Setup the config.
@@ -43,21 +64,8 @@ class XeroServiceProvider extends ServiceProvider
 
         $this->publishes([ $source => $this->app->databasePath().'/migrations' ]);
     }
+    
 
-    /**
-     * Register the application services.
-     *
-     * @return void
-     */
-    public function register()
-    {
-
-        $this->app->bind('xero', function () {
-            return new Xero;
-        });
-
-       
-    }
 
 
 }

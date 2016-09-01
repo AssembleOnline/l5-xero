@@ -6,7 +6,12 @@ use Illuminate\Database\Migrations\Migration;
 
 class CreateLfivexeroKeys extends Migration
 {
-    private $prefix = 'lfivexero_';
+    private $prefix = '';
+
+    public function __construct()
+    {
+        $this->prefix = config('xero.prefix');
+    }
 
     public function up()
     {
@@ -15,20 +20,20 @@ class CreateLfivexeroKeys extends Migration
         *   Contact Link Tables
         */
         //Contact -> Contact Persons
-        Schema::table($this->prefix.'contacts_contact_persons', function($table) {
-           $table->foreign('contacts_id')->references('id')->on($this->prefix.'contacts');
-           $table->foreign('contact_persons_id')->references('id')->on($this->prefix.'contact_persons');
-        });
+        // Schema::table($this->prefix.'contacts_contact_persons', function($table) {
+        //    $table->foreign('contacts_id')->references('id')->on($this->prefix.'contacts');
+        //    $table->foreign('contact_persons_id')->references('id')->on($this->prefix.'contact_persons');
+        // });
         //Contact -> Addresses
-        Schema::table($this->prefix.'contacts_addresses', function($table) {
-           $table->foreign('contacts_id')->references('id')->on($this->prefix.'contacts');
-           $table->foreign('addresses_id')->references('id')->on($this->prefix.'addresses');
-        });
+        // Schema::table($this->prefix.'contacts_addresses', function($table) {
+        //    $table->foreign('contacts_id')->references('id')->on($this->prefix.'contacts');
+        //    $table->foreign('addresses_id')->references('id')->on($this->prefix.'addresses');
+        // });
         //Contact -> Phones
-        Schema::table($this->prefix.'contacts_phones', function($table) {
-           $table->foreign('contacts_id')->references('id')->on($this->prefix.'contacts');
-           $table->foreign('phones_id')->references('id')->on($this->prefix.'phones');
-        });
+        // Schema::table($this->prefix.'contacts_phones', function($table) {
+        //    $table->foreign('contacts_id')->references('id')->on($this->prefix.'contacts');
+        //    $table->foreign('phones_id')->references('id')->on($this->prefix.'phones');
+        // });
         //Contact Groups -> Contacts
         Schema::table($this->prefix.'contact_groups_contacts', function($table) {
            $table->foreign('contact_groups_id')->references('id')->on($this->prefix.'contact_groups');
