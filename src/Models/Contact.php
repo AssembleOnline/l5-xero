@@ -51,29 +51,29 @@ class Contact extends Model {
 		'BrandingTheme_id',
     ];
 
-    public function contact_group()
+    public function ContactGroups()
     {
-    	return $this->belongsTo('Assemble\l5xero\Models\ContactGroup');
+    	return $this->belongsTo('Assemble\l5xero\Models\ContactGroup', 'ContactGroup_id');
     }
 
-   	public function contact_persons()
+   	public function ContactPeople()
    	{
-   		return $this->hasMany('Assemble\l5xero\Models\ContactPerson');
+   		return $this->hasMany('Assemble\l5xero\Models\ContactPerson', 'Contact_id');
    	}
 
-   	public function addresses()
+   	public function Addresses()
    	{
-   		return $this->hasMany('Assemble\l5xero\Models\Address');
+   		return $this->hasMany('Assemble\l5xero\Models\Address', 'Contact_id');
    	}
 
-   	public function phones()
+   	public function Phones()
    	{
-   		return $this->hasMany('Assemble\l5xero\Models\Phones');
+   		return $this->hasMany('Assemble\l5xero\Models\Phone', 'Contact_id');
    	}
 
-   	public function invoices()
+   	public function Invoices()
    	{
-   		return $this->hasMany('Assemble\l5xero\Models\Invoice');
+   		return $this->hasMany('Assemble\l5xero\Models\Invoice', 'Contact_id');
    	}
 
 }

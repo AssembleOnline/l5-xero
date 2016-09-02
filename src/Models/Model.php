@@ -43,5 +43,7 @@ class Model extends Eloquent {
         return $this;
     }
 
+    
+
 
 }

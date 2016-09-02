@@ -33,13 +33,13 @@ class Address extends Model {
 		'PostalCode',
 		'Country',
 		'AttentionTo',
-    'Contact_id'
+        'Contact_id'
     ];
 
 
    	public function contact()
    	{
-   		return $this->hasOne('Assemble\l5xero\Models\Contact');
+   		return $this->hasOne('Assemble\l5xero\Models\Contact', 'Contact_id');
    	}
 
 }

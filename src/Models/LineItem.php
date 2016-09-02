@@ -37,10 +37,15 @@ class LineItem extends Model {
 		'Invoice_id',
     ];
 
-    public function Item()
+    public function Invoice()
     {
-    	return $this->belongsTo('Assemble\l5xero\Models\Item');
+        return $this->belongsTo('Assemble\l5xero\Models\Invoice', 'Invoice_id');
     }
+
+    // public function Item()
+    // {
+    // 	return $this->belongsTo('Assemble\l5xero\Models\Item', 'Item_id');
+    // }
 
 
 }

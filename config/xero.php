@@ -15,5 +15,5 @@ return [
 
     'prefix' => 'lfivexero_',
 
-
+    'application_type'	=> 'private',
 ];

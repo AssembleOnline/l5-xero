@@ -33,7 +33,7 @@ class Phone extends Model {
 
    	public function contact()
    	{
-   		return $this->hasOne('Assemble\l5xero\Contact');
+   		return $this->hasOne('Assemble\l5xero\Contact', 'Contact_id');
    	}
 
 }

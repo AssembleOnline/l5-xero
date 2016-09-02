@@ -7,6 +7,7 @@ use Illuminate\Contracts\Bus\SelfHandling;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
 use Assemble\l5xero\Jobs\Job;
+use Assemble\l5xero\Traits\XeroClassMap;
 
 use Assemble\l5xero\Xero;
 
@@ -15,15 +16,16 @@ use DB;
 
 class XeroPull extends Job implements SelfHandling, ShouldQueue
 {
-    use InteractsWithQueue, SerializesModels;
+    use InteractsWithQueue, SerializesModels, XeroClassMap;
 
 
-    protected $classMap;
     protected $xero;
     protected $prefix;
     protected $model;
     protected $map;
     protected $page;
+    protected $saved = 0;
+    protected $updated = 0;
 
     /**
      * Create a new job instance.
@@ -35,116 +37,10 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
     {
         $this->xero = $xero;
     	$this->prefix = 'Assemble\\l5xero\\Models\\';
-    	$this->map = $this->classMap[$model];
+    	$map = $this->getXeroClassMap();
+        $this->map = $map[$model];
     	$this->model = $model;
         $this->page = $page;
-
-        $this->classMap = [
-            'ContactGroup' => [
-                'MANY'      => true,
-                'GUID'      => 'ContactGroup',
-                'MODEL'     => 'Accounting\\ContactGroup',
-                'SUB'       => null,
-            ],
-            'Contact' => [
-                'GUID'      => 'ContactID',
-                'MODEL'     => 'Accounting\\Contact',
-                'SUB'       => [
-                    'Address' => [
-                        'GUID'      => null,
-                        'MODEL'     => 'Accounting\\Address',
-                        'SUB'       => null,
-                    ],
-                    'Phone' => [
-                        'GUID'      => null,
-                        'MODEL'     => 'Accounting\\Phone',
-                        'SUB'       => null,
-                    ],
-                    'ContactPerson' => [
-                        'GUID'      => null,
-                        'MODEL'     => 'Accounting\\Contact\\ContactPerson',
-                        'SUB'       => null,
-                    ],
-                ]
-            ],
-            'Item' => [
-                'GUID'      => 'ItemID',
-                'MODEL'     => 'Accounting\\Item',
-                'SUB'       => [
-                    'PurchaseDetail' => [
-                        'SINGLE'    => true,
-                        'GUID'      => null,
-                        'MODEL'     => 'Accounting\\Item\\Purchase',
-                        'SUB'       => null,
-                    ],
-                    'SalesDetail' => [
-                        'SINGLE'    => true,
-                        'GUID'      => null,
-                        'MODEL'     => 'Accounting\\Item\\Sale',
-                        'SUB'       => null,
-                    ],
-                ],
-            ],
-            'Invoice' => [
-                'GUID'      => 'InvoiceID',
-                'MODEL' => 'Accounting\\Invoice',
-                'SUB'       => [
-                    'LineItem' => [ 
-                        'GUID'      => 'LineItemID',
-                        'MODEL' => 'Accounting\\Invoice\\LineItem',
-                        'SUB'       => null,
-                    ],
-                    'Payment' => [
-                        'GUID'      => 'PaymentID',
-                        'MODEL' => 'Accounting\\Payment',
-                        'SUB'       => null,
-                    ],
-                    'CreditNote' => [
-                        'GUID'      => 'CreditNoteID',
-                        'MODEL' => 'Accounting\\CreditNote',
-                        'SUB'       => null,
-                    ],
-                ]
-
-            ],
-            'Payment' => [
-                'GUID'      => 'PaymentID',
-                'MODEL' => 'Accounting\\Payment',
-                'SUB'       => null,
-            ],
-            'Overpayment' => [
-                'GUID'      => 'PrepaymentID',
-                'MODEL' => 'Accounting\\Overpayment',
-                'SUB'       => [
-                    'LineItem' => [
-                        'GUID'      => 'LineItemID',
-                        'MODEL' => 'Accounting\\Overpayment\\LineItem',
-                        'SUB'       => null,
-                    ],
-                    // 'Allocation' => [
-                    //  'GUID'      => null,
-                    //  'MODEL' => 'Accounting\\Overpayment\\Allocation',
-                    //  'SUB'       => null,
-                    // ],
-                ],
-            ],
-            'Prepayment' => [
-                'GUID'      => 'PrepaymentID',
-                'MODEL' => 'Accounting\\Prepayment',
-                'SUB'       => [
-                    'LineItem' => [
-                        'GUID'      => 'LineItemID',
-                        'MODEL' => 'Accounting\\Prepayment\\LineItem',
-                        'SUB'       => null,
-                    ],
-                    // 'Allocation' => [
-                    //  'GUID'      => null,
-                    //  'MODEL' => 'Accounting\\Prepayment\\Allocation',
-                    //  'SUB'       => null,
-                    // ],
-                ],
-            ],
-        ];
     }
 
     /**
@@ -173,9 +69,9 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 
         echo "FOUND [".count($objects)."] ".$this->model."(s)\n";
             
-        $this->processModel($this->model, $this->map['SUB'], $objects);
+        $this->processModel($this->model, $this->map, $objects);
 
-        echo "SAVED [".count($objects)."] ".$this->model."(s)\n";
+        echo "SAVED [".$this->saved."] UPDATED [".$this->updated."] ".$this->model."(s)\n";
     	
         //Check page count if need more, queue them at front...
     	if($pageable && count($objects) == 100 && $this->page != null)
@@ -186,8 +82,10 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 
     }
 
-    private function saveToModel($obj, $model, $fillable, $parent_key, $parent_value)
+    private function saveToModel($GUID, $obj, $model, $fillable, $parent_key = null, $parent_value = null)
     {
+        $returned = (new $model);
+        $saved = $returned->where($GUID, $obj[$GUID])->first();
     	/*
 		*	set to string array if XeroPHP collection
 		*/
@@ -211,27 +109,42 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 			$new[$parent_key] = $parent_value;
 		}
 		
-		$new['created_at'] = date('Y-m-d H:i:s');
 		$new['updated_at'] = date('Y-m-d H:i:s');
+        
+        if($saved == null)
+        {
+            $new['created_at'] = date('Y-m-d H:i:s');
 
-		$returned = (new $model);
-        $returned->fill($new);
-        $returned->save();
-        return $returned;
+    		$returned = (new $model);
+            $returned->fill($new);
+            $returned->save();
+            $this->saved++;
+            return $returned;
+        }
+        else
+        {
+            $saved->fill($new);
+            $saved->save();
+            $this->updated++;
+            return $saved;
+        }
     }
 
-    private function processModel($sub_key, $sub, $withStuff, $parent_key = null, $parent_value = null)
+
+
+    private function processModel($sub_key, $map, $withStuff, $parent_key = null, $parent_value = null)
     {
     	$model = $this->prefix.$sub_key;
     	$instance = (new $model);
     	$items = [];
     	$fillable = $instance->getFillable();
+        $sub = $map['SUB'];
 
     	foreach($withStuff as $obj)
     	{
-    		
+    		// print_r($obj);die;
     		//DO SAVE!
-    		$saved = $this->saveToModel($obj, $model, $fillable, $parent_key, $parent_value);
+            $saved = $this->saveToModel($map['GUID'], $obj, $model, $fillable, $parent_key, $parent_value);
 
     		/*
     		*	Run for collection of sub elements
@@ -239,19 +152,29 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
     		if($sub != null && count($sub) > 0)
     		foreach($sub as $key => $sub_item)
     		{
-    			if(isset($obj[$key.'s']))
+    			if(isset($obj[$key.'s']) || isset($obj[$key]))
 				{
                     //If the sub item kas the tag SINGLE then its a one-one relation so save directly
-					if( isset($sub_item['SINGLE']) && $sub_item['SINGLE'] == true)
+					if( isset($sub_item['SINGLE']))
 			    	{
 			    		$model_sub = $this->prefix.$key;
     					$instance_sub = (new $model_sub);
 			    		$fillable_sub = $instance_sub->getFillable();
-			    		$saved = $this->saveToModel($obj[$key.'s'], $model_sub, $fillable_sub, $sub_key.'_id', $saved->id);
+                        if($sub_item['SINGLE'] == 'HAS')
+                        {
+			    		   $saved_sub = $this->saveToModel($sub_item['GUID'], $obj[$key], $model_sub, $fillable_sub, $sub_key.'_id', $saved->id);
+                        }
+                        elseif($sub_item['SINGLE'] == 'BELONGS')
+                        {
+                           $saved_sub = $this->saveToModel($sub_item['GUID'], $obj[$key], $model_sub, $fillable_sub);
+                           $saved->{$key.'_id'} = $saved_sub->id;
+                           $saved->save();
+                        }
+
 			    	}
 			    	else // otherwise process the sub objects as one-many relations
 			    	{
-						$this->processModel($key, $sub_item['SUB'], $obj[$key.'s'], $sub_key.'_id', $saved->id);
+						$this->processModel($key, $sub_item, $obj[$key.'s'], $sub_key.'_id', $saved->id);
 			    	}
 			    		
     			}

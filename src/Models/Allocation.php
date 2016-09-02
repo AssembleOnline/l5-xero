@@ -32,7 +32,7 @@ class Allocation extends Model {
 
    	public function invoice()
    	{
-   		return $this->belongsTo('Assemble\l5xero\Models\Invoice');
+   		return $this->belongsTo('Assemble\l5xero\Models\Invoice', 'Invoice_id');
    	}
 
    	public function overpayments()

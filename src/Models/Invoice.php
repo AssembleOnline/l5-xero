@@ -48,21 +48,32 @@ class Invoice extends Model {
 		'FullyPaidOnDate',
 		'AmountCredited',
 		'UpdatedDateUTC',
+        'Contact_id',
     ];
 
-    public function payments()
+    protected $with = [
+        'Contact',
+        'LineItems'
+    ];
+
+    public function Contact()
     {
-    	return $this->hasMany('Assemble\l5xero\Models\Payment');
+        return $this->belongsTo('Assemble\l5xero\Models\Contact', 'Contact_id', 'id');
     }
 
-    public function allocations()
+    public function Payments()
+    {
+    	return $this->hasMany('Assemble\l5xero\Models\Payment', 'Invoice_id');
+    }
+
+    public function Allocations()
     {
     	return $this->hasMany('Assemble\l5xero\Models\Allocation');
     }
 
-    public function line_items()
+    public function LineItems()
     {
-    	return $this->hasMany('Assemble\l5xero\Models\LineItem');
+    	return $this->hasMany('Assemble\l5xero\Models\LineItem', 'Invoice_id', 'id');
     }
 
 }

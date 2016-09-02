@@ -45,12 +45,12 @@ class Item extends Model {
 
     public function purchase_details()
     {
-    	return $this->belongsTo('Assemble\l5xero\Models\PurchaseDetail');
+    	return $this->belongsTo('Assemble\l5xero\Models\PurchaseDetails', 'Item_id');
     }
 
     public function sales_details()
     {
-    	return $this->belongsTo('Assemble\l5xero\Models\SalesDetail');
+    	return $this->belongsTo('Assemble\l5xero\Models\SalesDetails', 'Item_id');
     }
 
 }

@@ -49,6 +49,8 @@ class CreateLfivexeroTables extends Migration
             $t->dateTime('UpdatedDateUTC')->nullable();
             $t->string('TaxType', 50)->nullable();
 
+            $t->integer('Item_id')->unsigned()->nullable();
+
             $t->timestamps();
         });
 
@@ -63,6 +65,8 @@ class CreateLfivexeroTables extends Migration
             $t->string('COGSAccountCode', 10)->nullable();
             $t->dateTime('UpdatedDateUTC')->nullable();
             $t->string('TaxType', 50)->nullable();
+
+            $t->integer('Item_id')->unsigned()->nullable();
 
             $t->timestamps();
         });

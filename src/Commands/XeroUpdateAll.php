@@ -33,14 +33,35 @@ class XeroUpdateAll extends Command
     public function handle()
     {
         $xero = $this->argument('type');
-        // dispatch(new XeroPull('ContactGroup'));
+        // dispatch(new XeroPull($xero, 'ContactGroup'));
         // dispatch(new XeroPull($xero, 'Contact'));
-        // dispatch(new XeroPull('Item'));
-        // dispatch(new XeroPull('Invoice'));
-        // dispatch(new XeroPull('Payment'));
-        // dispatch(new XeroPull('Overpayment'));
-        // dispatch(new XeroPull('Prepayment'));
+        // dispatch(new XeroPull($xero, 'Item'));
+        // dispatch(new XeroPull($xero, 'Invoice'));
+        // dispatch(new XeroPull($xero, 'Payment'));
+        // dispatch(new XeroPull($xero, 'Overpayment'));
+        // dispatch(new XeroPull($xero, 'Prepayment'));
 
-        dispatch(new XeroPush($xero, 'Contact', 1));
+        $contact = new \Assemble\l5xero\Models\Contact;
+        $contact->Name = str_random(5);
+        $contact->save();
+
+        $invoice = new \Assemble\l5xero\Models\Invoice;
+        $invoice->Type = 'ACCREC';
+        $invoice->Date = date('Y-m-dTH:i:s');
+        $invoice->DueDate = date('Y-m-dTH:i:s');
+        $invoice->LineAmountTypes = 'Inclusive';
+        $invoice->Contact_id = $contact->id;
+        $invoice->save();
+
+        $lineItem = new \Assemble\l5xero\Models\LineItem;
+        $lineItem->Description = 'Application Fee';
+        $lineItem->Quantity = 1;
+        $lineItem->UnitAmount = 100.00;
+        $lineItem->AccountCode = 200;
+        $lineItem->Invoice_id = $invoice->id;
+        $lineItem->save();
+
+
+        dispatch(new XeroPush($xero, 'Invoice', $invoice->id, [ '\SIS\Jobs\SendInvoice', ['20618', $invoice->id, '103'] ] ));
     }
 }

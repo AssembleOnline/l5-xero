@@ -47,22 +47,22 @@ class Payment extends Model {
 
    	public function invoice()
    	{
-   		return $this->belongsTo('Assemble\l5xero\Invoice');
+   		return $this->belongsTo('Assemble\l5xero\Invoice', 'Invoice_id');
    	}
 
    	public function credit_note()
    	{
-   		return $this->belongsTo('Assemble\l5xero\CreditNote');
+   		return $this->belongsTo('Assemble\l5xero\CreditNote', 'CreditNote_id');
    	}
 
    	public function prepayment()
    	{
-   		return $this->belongsTo('Assemble\l5xero\Prepayment');
+   		return $this->belongsTo('Assemble\l5xero\Prepayment', 'Prepayment_id');
    	}
 
    	public function overpayment()
    	{
-   		return $this->belongsTo('Assemble\l5xero\Overpayment');
+   		return $this->belongsTo('Assemble\l5xero\Overpayment', 'Overpayment_id');
    	}
 
 }

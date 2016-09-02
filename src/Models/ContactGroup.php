@@ -29,7 +29,6 @@ class ContactGroup extends Model {
      *
      * @var array
      */
-    public $required = 
 
     public function __construct()
     {

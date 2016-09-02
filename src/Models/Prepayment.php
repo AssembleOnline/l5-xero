@@ -44,17 +44,17 @@ class Prepayment extends Model {
 
    	public function contact()
    	{
-   		return $this->belongsTo('Assemble\l5xero\Contact');
+   		return $this->belongsTo('Assemble\l5xero\Contact', 'Contact_id');
    	}
 
    	public function payment()
    	{
-   		return $this->hasOne('Assemble\l5xero\Payment');
+   		return $this->hasOne('Assemble\l5xero\Payment', 'Prepayment_id');
    	}
 
     public function allocation()
     {
-      return $this->belongsTo('Assemble\l5xero\Allocation');
+      return $this->belongsTo('Assemble\l5xero\Allocation', 'Allocation_id');
     }
 
 }

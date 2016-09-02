@@ -47,12 +47,12 @@ class CreditNote extends Model {
 
    	public function contact()
    	{
-   		return $this->belongsTo('Assemble\l5xero\Models\Contact');
+   		return $this->belongsTo('Assemble\l5xero\Models\Contact', 'Contact_id');
    	}
 
    	public function payment()
    	{
-   		return $this->hasOne('Assemble\l5xero\Models\Payment');
+   		return $this->hasOne('Assemble\l5xero\Models\Payment', 'CreditNote_id');
    	}
 
     public function allocation()

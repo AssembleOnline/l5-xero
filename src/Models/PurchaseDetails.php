@@ -3,14 +3,14 @@ namespace Assemble\l5xero\Models;
 
 use Assemble\l5xero\Models\Model as Model;
 
-class SalesDetail extends Model {
+class PurchaseDetails extends Model {
 
 	 /**
      * The database table used by the model.
      *
      * @var string
      */
-    protected $table = 'sales_details';
+    protected $table = 'purchase_details';
 
     public function __construct()
     {
