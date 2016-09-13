@@ -53,7 +53,8 @@ class Invoice extends Model {
 
     protected $with = [
         'Contact',
-        'LineItems'
+        'LineItems',
+        'Payments',
     ];
 
     public function Contact()

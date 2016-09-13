@@ -90,24 +90,27 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
         $res = $xeroApp->save($item);
         $toSave = $res->getElements();
 
+        // print_r($toSave);
+        //Debug
+        // Log::info(print_r($toSave));
+
         $save = array_replace_recursive($data, $toSave[0]);
-       
-        $object->fill($save);
+
+        $done = $object->fill($save)->save();
         foreach($this->map['SUB'] as $key => $data)
         {
-        	if(isset($data['SINGLE']) )
+            if(isset($data['SINGLE']) )
         	{
-        		if(isset($data[$key]))
+        		if(isset($save[$key]))
         		$this->saveToSub($object, $key, $save[$key], $data);
         	}
         	else
         	{
-        		if(isset($data[str_plural($key)]))
-        		$this->saveToSub($rel, $key, $data[str_plural($key)], $data);
+        		if(isset($save[str_plural($key)]))
+        		$this->saveToSub($object, $key, $save[str_plural($key)], $data);
         	}
         	
         }
-        $done = $object->save();
 
         if($done && $this->callback != null && ( isset($this->callback[0]) && isset($this->callback[1]) ) )
         {
