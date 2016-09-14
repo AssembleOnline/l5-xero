@@ -13,6 +13,7 @@ use Assemble\l5xero\Xero;
 
 use Log;
 use DB;
+use ReflectionClass;
 
 class XeroPull extends Job implements SelfHandling, ShouldQueue
 {
@@ -26,6 +27,7 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
     protected $page;
     protected $saved = 0;
     protected $updated = 0;
+    protected $callback;
 
     /**
      * Create a new job instance.
@@ -33,14 +35,16 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
      * @param  String $model
      * @return void
      */
-    public function __construct($xero, $model, $page = null)
+    public function __construct($xero, $model, $page = null, $callback = null)
     {
         $this->xero = $xero;
     	$this->prefix = 'Assemble\\l5xero\\Models\\';
     	$map = $this->getXeroClassMap();
         $this->map = $map[$model];
     	$this->model = $model;
-        $this->page = $page;
+        $this->page = ( $page == null ? $page = 1 : $page );
+
+        $this->callback = $callback;
     }
 
     /**
@@ -65,19 +69,20 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
         }
         $object = $xero->load($this->map['MODEL']);
         $pageable = call_user_func('XeroPHP\\Models\\'.$this->map['MODEL'].'::isPageable');
-        $objects = ( $pageable ? $object->page(1)->execute() : $object->execute() );
+        $objects = ( $pageable ? $object->page($this->page)->execute() : $object->execute() );
 
         echo "FOUND [".count($objects)."] ".$this->model."(s)\n";
             
-        $this->processModel($this->model, $this->map, $objects);
+        $this->processModel($this->model, $this->map, $objects, null, null, true);
 
-        echo "SAVED [".$this->saved."] UPDATED [".$this->updated."] ".$this->model."(s)\n";
+        echo "SAVED [".$this->saved."] UPDATED [".$this->updated."] ".$this->model."(s) & related Object(s)\n";
     	
         //Check page count if need more, queue them at front...
-    	if($pageable && count($objects) == 100 && $this->page != null)
+    	if($pageable == true && count($objects) == 100 && $this->page != null)
         {
-            dispatch(new XeroSync($this->model, $this->page+1));
-            echo "ADDED NEXT PAGE TO QUEUE FOR ".$this->model."(s)\n";
+            $this->page++;
+            dispatch(new XeroPull($this->xero, $this->model, $this->page, $this->callback));
+            echo "ADDED NEXT PAGE { ".$this->page." } TO QUEUE FOR ".$this->model."(s)\n";
         }
 
     }
@@ -86,20 +91,23 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
     {
         $returned = (new $model);
         $saved = $returned->where($GUID, $obj[$GUID])->first();
-    	/*
-		*	set to string array if XeroPHP collection
-		*/
-		if(!is_array($obj))
-		{
-			$obj = $obj->toStringArray();
-		}
+    	
+        /*
+        *   set to string array if XeroPHP collection
+        */
+        if(!is_array($obj))
+        {
+            $obj = $obj->toStringArray();
+        }
 
-		//create new object instance and save to DB
-		$new = [];
-		foreach($fillable as $item)
-		{
-			$new[$item] = ( isset($obj[$item]) ? $obj[$item] : null );
-		}
+
+        //create new object instance and save to DB
+        $new = [];
+        foreach($fillable as $item)
+        {
+            $new[$item] = ( isset($obj[$item]) ? $obj[$item] : null );
+        }
+
 
 
 		// echo $parent_key.' -- '.$parent_value;
@@ -110,29 +118,35 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 		}
 		
 		$new['updated_at'] = date('Y-m-d H:i:s');
-        
+
         if($saved == null)
         {
             $new['created_at'] = date('Y-m-d H:i:s');
 
     		$returned = (new $model);
             $returned->fill($new);
-            $returned->save();
+            $done = $returned->save();
             $this->saved++;
+
             return $returned;
         }
         else
         {
             $saved->fill($new);
-            $saved->save();
+            $done = $saved->save();
             $this->updated++;
+
             return $saved;
         }
     }
 
+    private function queueCallback($object, $status)
+    {
+            $job = (new ReflectionClass($this->callback))->newInstanceArgs([$object, $status]);
+            dispatch($job);
+    }
 
-
-    private function processModel($sub_key, $map, $withStuff, $parent_key = null, $parent_value = null)
+    private function processModel($sub_key, $map, $withStuff, $parent_key = null, $parent_value = null, $shallow = false)
     {
     	$model = $this->prefix.$sub_key;
     	$instance = (new $model);
@@ -140,11 +154,13 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
     	$fillable = $instance->getFillable();
         $sub = $map['SUB'];
 
-    	foreach($withStuff as $obj)
-    	{
-    		// print_r($obj);die;
+        $last_updated = 0;
+        $last_saved = 0;
+        foreach($withStuff as $obj)
+        {
     		//DO SAVE!
             $saved = $this->saveToModel($map['GUID'], $obj, $model, $fillable, $parent_key, $parent_value);
+
 
     		/*
     		*	Run for collection of sub elements
@@ -174,11 +190,25 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 			    	}
 			    	else // otherwise process the sub objects as one-many relations
 			    	{
-						$this->processModel($key, $sub_item, $obj[$key.'s'], $sub_key.'_id', $saved->id);
+						$this->processModel($key, $sub_item, $obj[str_plural($key)], $sub_key.'_id', $saved->id);
 			    	}
 			    		
     			}
     		}
+
+            if($shallow == true && $this->callback != null && isset($this->callback) )
+            {
+                if($this->saved > $last_saved)
+                {
+                    $this->queueCallback($saved, 'create');
+                }
+                else
+                {
+                    $this->queueCallback($saved, 'update');
+                }
+            }
+            $last_saved = $this->saved;
+            $last_updated = $this->updated;
     	}
     }
 }

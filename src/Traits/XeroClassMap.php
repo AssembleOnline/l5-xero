@@ -18,17 +18,17 @@ trait XeroClassMap {
 	            'MODEL'     => 'Accounting\\Contact',
 	            'SUB'       => [
 	                'Address' => [
-	                    'GUID'      => null,
+	                    'GUID'      => 'Contact_id',
 	                    'MODEL'     => 'Accounting\\Address',
 	                    'SUB'       => null,
 	                ],
 	                'Phone' => [
-	                    'GUID'      => null,
+	                    'GUID'      => 'Contact_id',
 	                    'MODEL'     => 'Accounting\\Phone',
 	                    'SUB'       => null,
 	                ],
 	                'ContactPerson' => [
-	                    'GUID'      => null,
+	                    'GUID'      => 'Contact_id',
 	                    'MODEL'     => 'Accounting\\Contact\\ContactPerson',
 	                    'SUB'       => null,
 	                ],
@@ -39,14 +39,14 @@ trait XeroClassMap {
 	            'MODEL'     => 'Accounting\\Item',
 	            'SUB'       => [
 	                'PurchaseDetails' => [
-	                    'SINGLE'    => 'HAS',
-	                    'GUID'      => null,
+	                    // 'SINGLE'    => 'HAS',
+	                    'GUID'      => 'Item_id',
 	                    'MODEL'     => 'Accounting\\Item\\Purchase',
 	                    'SUB'       => null,
 	                ],
 	                'SalesDetails' => [
-	                    'SINGLE'    => 'HAS',
-	                    'GUID'      => null,
+	                    // 'SINGLE'    => 'HAS',
+	                    'GUID'      => 'Item_id',
 	                    'MODEL'     => 'Accounting\\Item\\Sale',
 	                    'SUB'       => null,
 	                ],
