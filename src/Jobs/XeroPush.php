@@ -87,21 +87,21 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
         $item->fromStringArray($data);
         $item->setDirty('_data');
 
-        $pre_existing = $xero->load($this->map['MODEL'])->where('Name', $data['Name'])->execute();
-        if(count($pre_existing) > 0)
-        {
-            foreach($pre_existing as $item)
-            {
-                $toSave = $item->toStringArray();
-                break;
-            }
-        }
-        else
-        {
+        // $pre_existing = $xero->load($this->map['MODEL'])->where($this->map, $data['Name'])->execute();
+        // if(count($pre_existing) > 0)
+        // {
+        //     foreach($pre_existing as $itemsub)
+        //     {
+        //         $toSave = $itemsub->toStringArray();
+        //         break;
+        //     }
+        // }
+        // else
+        // {
             $res = $xeroApp->save($item);
             $toSave = $res->getElements();
             $toSave = $toSave[0];
-        }
+        // }
 
         // print_r($toSave);
         //Debug
