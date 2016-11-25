@@ -65,70 +65,80 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
             default:
                 throw new Exception("Application type does not exist [$type]");
         }
-
-        $class = '\\XeroPHP\\Models\\Accounting\\'.$this->model;
-        $xeroApp = $xero->getApp();
-        $item = new $class($xeroApp);
-        $model = $this->prefix.$this->model;
-        $instance = (new $model);
-        $fillable = $instance->getFillable();
-        $object = $instance->findOrFail($this->id);
-        $data = $object->toArray();
-
-        foreach($data as $key => $value)
+        try
         {
-        	if(is_array($value))
-        	{
-        		$data[Str::studly($key)] = $value;
-        		unset($data[$key]);
-        	}
+
+
+            $class = '\\XeroPHP\\Models\\Accounting\\'.$this->model;
+            $xeroApp = $xero->getApp();
+            $item = new $class($xeroApp);
+            $model = $this->prefix.$this->model;
+            $instance = (new $model);
+            $fillable = $instance->getFillable();
+            $object = $instance->findOrFail($this->id);
+            $data = $object->toArray();
+
+            foreach($data as $key => $value)
+            {
+            	if(is_array($value))
+            	{
+            		$data[Str::studly($key)] = $value;
+            		unset($data[$key]);
+            	}
+            }
+
+            $item->fromStringArray($data);
+            $item->setDirty('_data');
+
+            // $pre_existing = $xeroApp->load($this->map['MODEL'])->where($this->map, $data['Name'])->execute();
+            // if(count($pre_existing) > 0)
+            // {
+            //     foreach($pre_existing as $itemsub)
+            //     {
+            //         $toSave = $itemsub->toStringArray();
+            //         break;
+            //     }
+            // }
+            // else
+            // {
+                $res = $xeroApp->save($item);
+                // Log::info(print_r($res));
+                $toSave = $res->getElements();
+                $toSave = $toSave[0];
+            // }
+
+            // print_r($toSave);
+            //Debug
+            // Log::info(print_r($toSave));
+            $save = array_replace_recursive($data, $toSave);
+
+            $done = $object->update($save);
+            foreach($this->map['SUB'] as $key => $data)
+            {
+                if(isset($data['SINGLE']) )
+            	{
+            		if(isset($save[$key]))
+            		$this->saveToSub($object, $key, $save[$key], $data);
+            	}
+            	else
+            	{
+            		if(isset($save[str_plural($key)]))
+            		$this->saveToSub($object, $key, $save[str_plural($key)], $data);
+            	}
+            	
+            }
+
+            if($done && $this->callback != null && ( isset($this->callback[0]) && isset($this->callback[1]) ) )
+            {
+            	$job = (new ReflectionClass($this->callback[0]))->newInstanceArgs($this->callback[1]);
+            	dispatch($job);
+            }
         }
-
-        $item->fromStringArray($data);
-        $item->setDirty('_data');
-
-        // $pre_existing = $xero->load($this->map['MODEL'])->where($this->map, $data['Name'])->execute();
-        // if(count($pre_existing) > 0)
-        // {
-        //     foreach($pre_existing as $itemsub)
-        //     {
-        //         $toSave = $itemsub->toStringArray();
-        //         break;
-        //     }
-        // }
-        // else
-        // {
-            $res = $xeroApp->save($item);
-            $toSave = $res->getElements();
-            $toSave = $toSave[0];
-        // }
-
-        // print_r($toSave);
-        //Debug
-        // Log::info(print_r($toSave));
-
-        $save = array_replace_recursive($data, $toSave);
-
-        $done = $object->fill($save)->save();
-        foreach($this->map['SUB'] as $key => $data)
+        catch(\XeroPHP\Remote\Exception\UnauthorizedException $e)
         {
-            if(isset($data['SINGLE']) )
-        	{
-        		if(isset($save[$key]))
-        		$this->saveToSub($object, $key, $save[$key], $data);
-        	}
-        	else
-        	{
-        		if(isset($save[str_plural($key)]))
-        		$this->saveToSub($object, $key, $save[str_plural($key)], $data);
-        	}
-        	
-        }
-
-        if($done && $this->callback != null && ( isset($this->callback[0]) && isset($this->callback[1]) ) )
-        {
-        	$job = (new ReflectionClass($this->callback[0]))->newInstanceArgs($this->callback[1]);
-        	dispatch($job);
+            Log::info($e);
+            echo 'ERROR: Xero Authentication Error. Check logs for more details.';
+            return false;
         }
     }
 
@@ -146,8 +156,7 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
     		}
 	    	else // save existing
 	    	{
-	    		$rel->fill($data);
-	    		$rel->save();
+	    		$rel->update($data);
 	    	}
 	    	if($sub['SUB'] != null)
 	    	foreach($sub['SUB'] as $key => $data_sub)
@@ -178,8 +187,12 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
 		    	}
 		    	else
 		    	{
-		    		$rel->fill($data);
-		    		$rel->save();
+                    $key = array_search($rel->id, array_column($data, 'id'));
+                    if($key !== false)
+                    {
+		    		    $saved = $rel->update($data[$key]);
+                    }
+                    //this shouldnt happen Oo.
 		    	}
 		    	if($sub['SUB'] != null)
 		    	foreach($sub['SUB'] as $key => $data_sub)

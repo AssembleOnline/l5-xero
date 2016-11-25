@@ -67,24 +67,32 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
             default:
                 throw new Exception("Application type does not exist [$type]");
         }
-        $object = $xero->load($this->map['MODEL']);
-        $pageable = call_user_func('XeroPHP\\Models\\'.$this->map['MODEL'].'::isPageable');
-        $objects = ( $pageable ? $object->page($this->page)->execute() : $object->execute() );
-
-        echo "FOUND [".count($objects)."] ".$this->model."(s)\n";
-            
-        $this->processModel($this->model, $this->map, $objects, null, null, true);
-
-        echo "SAVED [".$this->saved."] UPDATED [".$this->updated."] ".$this->model."(s) & related Object(s)\n";
-    	
-        //Check page count if need more, queue them at front...
-    	if($pageable == true && count($objects) == 100 && $this->page != null)
+        try
         {
-            $this->page++;
-            dispatch(new XeroPull($this->xero, $this->model, $this->page, $this->callback));
-            echo "ADDED NEXT PAGE { ".$this->page." } TO QUEUE FOR ".$this->model."(s)\n";
-        }
+            $object = $xero->load($this->map['MODEL']);
+            $pageable = call_user_func('XeroPHP\\Models\\'.$this->map['MODEL'].'::isPageable');
+            $objects = ( $pageable ? $object->page($this->page)->execute() : $object->execute() );
 
+            echo "FOUND [".count($objects)."] ".$this->model."(s)\n";
+                
+            $this->processModel($this->model, $this->map, $objects, null, null, true);
+
+            echo "SAVED [".$this->saved."] UPDATED [".$this->updated."] ".$this->model."(s) & related Object(s)\n";
+        	
+            //Check page count if need more, queue them at front...
+        	if($pageable == true && count($objects) == 100 && $this->page != null)
+            {
+                $this->page++;
+                dispatch(new XeroPull($this->xero, $this->model, $this->page, $this->callback));
+                echo "ADDED NEXT PAGE { ".$this->page." } TO QUEUE FOR ".$this->model."(s)\n";
+            }
+        }
+        catch(\XeroPHP\Remote\Exception\UnauthorizedException $e)
+        {
+            Log::info($e);
+            echo 'ERROR: Xero Authentication Error. Check logs for more details.';
+            return false;
+        }
     }
 
     private function saveToModel($GUID, $obj, $model, $fillable, $parent_key = null, $parent_value = null)
