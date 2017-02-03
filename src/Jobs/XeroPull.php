@@ -65,7 +65,7 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
                 $xero = new Xero($this->xero);
             break;
             default:
-                throw new Exception("Application type does not exist [$type]");
+                throw new \Assemble\l5xero\Exceptions\InvalidTypeException();
         }
         try
         {
@@ -98,8 +98,10 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
     private function saveToModel($GUID, $obj, $model, $fillable, $parent_key = null, $parent_value = null)
     {
         $returned = (new $model);
-        $saved = $returned->where($GUID, $obj[$GUID])->first();
-    	
+        if(isset($obj[$GUID]))
+            $saved = $returned->where($GUID, $obj[$GUID])->first();
+    	else
+            $saved = null;
         /*
         *   set to string array if XeroPHP collection
         */
