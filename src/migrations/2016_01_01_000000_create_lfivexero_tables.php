@@ -18,7 +18,7 @@ class CreateLfivexeroTables extends Migration
 
         $LineAmountTypes = ['Exclusive', 'Inclusive', 'NoTax'];
         
-        $Status = ['DRAFT', 'SUBMITTED', 'AUTHORISED', 'DELETED'];
+        $Status = ['DRAFT', 'SUBMITTED', 'AUTHORISED', 'DELETED', 'VOIDED', 'PAID'];
         
         $PaymentType = ['ACCRECPAYMENT', 'ACCPAYPAYMENT', 'ARCREDITPAYMENT', 'APCREDITPAYMENT', 'AROVERPAYMENTPAYMENT', 'ARPREPAYMENTPAYMENT', 'APPREPAYMENTPAYMENT', 'APOVERPAYMENTPAYMENT'];
         
