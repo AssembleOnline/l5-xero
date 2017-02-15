@@ -33,6 +33,17 @@ class XeroUpdateAll extends Command
     public function handle()
     {
         $xero = $this->argument('type');
+
+
+        $this->queuePushForType($xero, 'ContactGroup', \Assemble\l5xero\Models\ContactGroup::where('ContactGroupID', null)->get());
+        $this->queuePushForType($xero, 'Contact', \Assemble\l5xero\Models\Contact::where('ContactID', null)->get());
+        $this->queuePushForType($xero, 'Item', \Assemble\l5xero\Models\Item::where('ItemID', null)->get());
+        $this->queuePushForType($xero, 'Invoice', \Assemble\l5xero\Models\Invoice::where('InvoiceID', null)->get());
+        $this->queuePushForType($xero, 'Payment', \Assemble\l5xero\Models\Payment::where('PaymentID', null)->get());
+        $this->queuePushForType($xero, 'Overpayment', \Assemble\l5xero\Models\Overpayment::where('OverpaymentID', null)->get());
+        $this->queuePushForType($xero, 'Prepayment', \Assemble\l5xero\Models\Prepayment::where('PrepaymentID', null)->get());
+
+
         dispatch(new XeroPull($xero, 'ContactGroup'));
         dispatch(new XeroPull($xero, 'Contact'));
         dispatch(new XeroPull($xero, 'Item'));
@@ -68,5 +79,14 @@ class XeroUpdateAll extends Command
 
 
         // dispatch(new XeroPush($xero, 'Invoice', 2 ));
+    }
+
+    private function queuePushForType(&$xero, $type, $objects_to_push)
+    {
+        if(count($objects_to_push) > 0)
+        foreach($objects_to_push as $object)
+        {
+            dispatch(new XeroPush($xero, $type, $object->id));
+        }
     }
 }

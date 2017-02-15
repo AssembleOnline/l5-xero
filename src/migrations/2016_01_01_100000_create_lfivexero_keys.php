@@ -17,6 +17,18 @@ class CreateLfivexeroKeys extends Migration
     {
         
         /*
+        * Unique keys
+        */
+        Schema::table($this->prefix.'contacts', function($table) {
+           $table->unique('Name');
+        });
+        Schema::table($this->prefix.'items', function($table) {
+           $table->unique('ItemCode');
+        });
+
+
+
+        /*
         *   Contact Link Tables
         */
         //Contact -> Contact Persons

@@ -135,7 +135,7 @@ class CreateLfivexeroTables extends Migration
             $t->increments('id')->unsigned();
 
             $t->string('Reference')->nullable();
-            $t->string('OverpaymentID')->nullable();
+            $t->string('PrepaymentID')->nullable();
             $t->enum('Type', $PrePaymentType)->nullable();
             $t->date('Date')->nullable();
             $t->enum('Status', $PrePaymentStatus)->nullable();

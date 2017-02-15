@@ -24,7 +24,7 @@ class Prepayment extends Model {
      */
     protected $fillable = [
       'Reference',
-      'OverpaymentID',
+      'PrepaymentID',
       'Type',
       'Date',
       'Status',
