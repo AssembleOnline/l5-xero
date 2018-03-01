@@ -56,7 +56,7 @@ class Contact extends Model {
     	return $this->belongsTo('Assemble\l5xero\Models\ContactGroup', 'ContactGroup_id');
     }
 
-   	public function ContactPeople()
+   	public function ContactPersons()
    	{
    		return $this->hasMany('Assemble\l5xero\Models\ContactPerson', 'Contact_id');
    	}

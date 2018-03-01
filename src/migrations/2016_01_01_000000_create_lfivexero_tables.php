@@ -87,7 +87,7 @@ class CreateLfivexeroTables extends Migration
             $t->text('PurchaseDescription')->nullable();
             $t->integer('PurchaseDetails_id')->unsigned()->nullable();
             $t->integer('SalesDetails_id')->unsigned()->nullable();
-            $t->string('IsTrackedAsInventory', 100)->nullable();
+            $t->boolean('IsTrackedAsInventory')->default(0);
             $t->string('TotalCostPool', 100)->nullable();
             $t->dateTime('UpdatedDateUTC')->nullable();
 
@@ -300,7 +300,7 @@ class CreateLfivexeroTables extends Migration
             $t->string('DiscountRate', 50)->nullable();
 
             
-            $t->integer('Invoice_id')->unsigned();
+            $t->integer('Invoice_id')->unsigned()->nullable();
 
 
             $t->timestamps();

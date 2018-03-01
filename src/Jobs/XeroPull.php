@@ -97,11 +97,6 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 
     private function saveToModel($GUID, $obj, $model, $fillable, $parent_key = null, $parent_value = null)
     {
-        $returned = (new $model);
-        if(isset($obj[$GUID]))
-            $saved = $returned->where($GUID, $obj[$GUID])->first();
-    	else
-            $saved = null;
         /*
         *   set to string array if XeroPHP collection
         */
@@ -109,6 +104,13 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
         {
             $obj = $obj->toStringArray();
         }
+
+        // Find existing Entry
+        $returned = (new $model);
+        if(isset($obj[$GUID]))
+            $saved = $returned->where($GUID, $obj[$GUID])->first();
+        else
+            $saved = null;
 
 
         //create new object instance and save to DB
@@ -120,7 +122,6 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 
 
 
-		// echo $parent_key.' -- '.$parent_value;
 			//Add id to new item if created in upper parent
 		if($parent_key != null && $parent_value != null)
 		{
@@ -135,7 +136,15 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 
     		$returned = (new $model);
             $returned->fill($new);
-            $done = $returned->save();
+            try {
+                $done = $returned->save();
+            } catch(Exception $e) {
+                Log::error("L5XERO - Exception: Failed To Save [".$model."] Relation [".$parent_key.":".$parent_value."] Reason [Failed To Save Child]");
+                throw $e;
+            }
+            if(!$done) {
+                Log::error("L5XERO - ERROR: Failed To Save [".$model."] Relation [".$parent_key.":".$parent_value."] Reason [Failed To Save Child]");
+            }
             $this->saved++;
 
             return $returned;
@@ -143,7 +152,15 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
         else
         {
             $saved->fill($new);
-            $done = $saved->save();
+            try {
+                $done = $saved->save();
+            } catch(Exception $e) {
+                Log::error("L5XERO - Exception: Failed To Save [".$model."] Relation [".$parent_key.":".$parent_value."] Reason [Failed To Save Child]");
+                throw $e;
+            }
+            if(!$done) {
+                Log::error("L5XERO - ERROR: Failed To Save [".$model."] Relation [".$parent_key.":".$parent_value."] Reason [Failed To Save Child]");
+            }
             $this->updated++;
 
             return $saved;
@@ -169,7 +186,13 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
         foreach($withStuff as $obj)
         {
     		//DO SAVE!
-            $saved = $this->saveToModel($map['GUID'], $obj, $model, $fillable, $parent_key, $parent_value);
+            try {
+                $saved = $this->saveToModel($map['GUID'], $obj, $model, $fillable, $parent_key, $parent_value);
+            } catch (Exception $e) {
+                Log::error("Failed To Store \"".$model."\" Level 1");
+                Log::error($e);
+                continue;
+            }
 
 
     		/*
@@ -188,11 +211,23 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 			    		$fillable_sub = $instance_sub->getFillable();
                         if($sub_item['SINGLE'] == 'HAS')
                         {
-			    		   $saved_sub = $this->saveToModel($sub_item['GUID'], $obj[$key], $model_sub, $fillable_sub, $sub_key.'_id', $saved->id);
+			    		    try {
+                                $saved_sub = $this->saveToModel($sub_item['GUID'], $obj[$key], $model_sub, $fillable_sub, $sub_key.'_id', $saved->id);
+                            } catch (Exception $e) {
+                                Log::error("Failed To Store \"".$model."\" Level 2");
+                                Log::error($e);
+                                continue;
+                            }
                         }
                         elseif($sub_item['SINGLE'] == 'BELONGS')
                         {
-                           $saved_sub = $this->saveToModel($sub_item['GUID'], $obj[$key], $model_sub, $fillable_sub);
+                            try {
+                                $saved_sub = $this->saveToModel($sub_item['GUID'], $obj[$key], $model_sub, $fillable_sub);
+                            } catch (Exception $e) {
+                                Log::error("Failed To Store \"".$model."\"  Level 3");
+                                Log::error($e);
+                                continue;
+                            }
                            $saved->{$key.'_id'} = $saved_sub->id;
                            $saved->save();
                         }

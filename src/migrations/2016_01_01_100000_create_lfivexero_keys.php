@@ -23,7 +23,7 @@ class CreateLfivexeroKeys extends Migration
            $table->unique('Name');
         });
         Schema::table($this->prefix.'items', function($table) {
-           $table->unique('ItemCode');
+           $table->unique('Code');
         });
 
 

@@ -76,6 +76,7 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
             $instance = (new $model);
             $fillable = $instance->getFillable();
             $object = $instance->findOrFail($this->id);
+
             $data = $object->toArray();
 
             foreach($data as $key => $value)
@@ -86,6 +87,9 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
             		unset($data[$key]);
             	}
             }
+
+            $this->cleanFieldTypes($data, $item);
+            // dd($data);
 
             $item->fromStringArray($data);
             $item->setDirty('_data');
@@ -118,7 +122,9 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
                 if(isset($data['SINGLE']) )
             	{
             		if(isset($save[$key]))
-            		$this->saveToSub($object, $key, $save[$key], $data);
+                    {
+            		    $this->saveToSub($object, $key, $save[$key], $data);
+                    }
             	}
             	else
             	{
@@ -136,9 +142,30 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
         }
         catch(\XeroPHP\Remote\Exception\UnauthorizedException $e)
         {
-            Log::info($e);
+            Log::error($e);
             echo 'ERROR: Xero Authentication Error. Check logs for more details.';
             return false;
+        }
+    }
+
+    private function cleanFieldTypes(&$arr, $class)
+    {
+        $props = $class::getProperties();
+        foreach($arr as $key => &$val)
+        {
+            if( isset($props[$key][1]) )
+            {
+                switch($props[$key][1]) {
+                    case "bool":
+                        $val = (boolean) $val;
+                    break;
+                }
+                if($val === null)
+                {  
+                    unset($arr[$key]);
+                }
+                
+            }
         }
     }
 
@@ -178,7 +205,7 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
     	{
     		//first get the collection
     		$rels = $object->{str_plural($relation)};
-
+            if($rels)
     		foreach($rels as $rel)
     		{
 	    		if($rel == null)
