@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 use Assemble\l5xero\Jobs\Job;
 use Assemble\l5xero\Traits\XeroClassMap;
+use Assemble\l5xero\Traits\XeroAPIRateLimited;
 
 use Assemble\l5xero\Xero;
 
@@ -17,7 +18,7 @@ use ReflectionClass;
 
 class XeroPull extends Job implements SelfHandling, ShouldQueue
 {
-    use InteractsWithQueue, SerializesModels, XeroClassMap;
+    use InteractsWithQueue, SerializesModels, XeroClassMap, XeroAPIRateLimited;
 
 
     protected $xero;
@@ -54,6 +55,7 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
      */
     public function handle()
     {
+        $this->rateLimit_canRun();
         switch (strtolower($this->xero)) {
             case 'private':
                 $xero = new Xero($this->xero);
@@ -91,7 +93,7 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
         {
             Log::info($e);
             echo 'ERROR: Xero Authentication Error. Check logs for more details.';
-            return false;
+            throw $e;
         }
     }
 
