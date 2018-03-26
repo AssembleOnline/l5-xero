@@ -15,6 +15,8 @@ use Assemble\l5xero\Xero;
 use Log;
 use DB;
 use ReflectionClass;
+use Cache;
+use Carbon\Carbon;
 
 class XeroPull extends Job implements SelfHandling, ShouldQueue
 {
@@ -30,22 +32,27 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
     protected $updated = 0;
     protected $callback;
 
+    private $since;
+
     /**
      * Create a new job instance.
      *
      * @param  String $model
      * @return void
      */
-    public function __construct($xero, $model, $page = null, $callback = null)
+    public function __construct($xero, $model, $page = null, $callback = null, $since = null)
     {
         $this->xero = $xero;
     	$this->prefix = 'Assemble\\l5xero\\Models\\';
-    	$map = $this->getXeroClassMap();
+        
+        $map = $this->getXeroClassMap();
         $this->map = $map[$model];
-    	$this->model = $model;
+        $this->model = $model;
         $this->page = ( $page == null ? $page = 1 : $page );
 
         $this->callback = $callback;
+        $class = $this->prefix.$this->model;
+        $this->since = ( $since == null && (new $class)->hasUpdateField() ? (new $class)->max('UpdatedDateUTC') : $since );
     }
 
     /**
@@ -71,28 +78,38 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
         }
         try
         {
+            echo "Running XeroPull For ".$this->model.PHP_EOL;
+
             $object = $xero->load($this->map['MODEL']);
+
+            // Only get recently updated records
+            $class = $this->prefix.$this->model;
+            if(method_exists($object, 'modifiedAfter') && (new $class)->hasUpdateField()) {
+                $since = new Carbon($this->since);
+                echo "Getting Updates Since: ".$since.PHP_EOL;
+                $object = $object->modifiedAfter($since);
+            }
             $pageable = call_user_func('XeroPHP\\Models\\'.$this->map['MODEL'].'::isPageable');
             $objects = ( $pageable ? $object->page($this->page)->execute() : $object->execute() );
 
-            echo "FOUND [".count($objects)."] ".$this->model."(s)\n";
+            echo "FOUND [".count($objects)."] ".$this->model."(s)\n".PHP_EOL;
                 
             $this->processModel($this->model, $this->map, $objects, null, null, true);
 
-            echo "SAVED [".$this->saved."] UPDATED [".$this->updated."] ".$this->model."(s) & related Object(s)\n";
-        	
+            echo "SAVED [".$this->saved."] UPDATED [".$this->updated."] ".$this->model."(s) & related Object(s)\n".PHP_EOL;
+            
+
             //Check page count if need more, queue them at front...
-        	if($pageable == true && count($objects) == 100 && $this->page != null)
-            {
+        	if($pageable == true && count($objects) == 100 && $this->page != null) {
                 $this->page++;
-                dispatch(new XeroPull($this->xero, $this->model, $this->page, $this->callback));
-                echo "ADDED NEXT PAGE { ".$this->page." } TO QUEUE FOR ".$this->model."(s)\n";
+                dispatch(new XeroPull($this->xero, $this->model, $this->page, $this->callback, $this->since));
+                echo "ADDED NEXT PAGE { ".$this->page." } TO QUEUE FOR ".$this->model."(s)\n".PHP_EOL;
             }
         }
         catch(\XeroPHP\Remote\Exception\UnauthorizedException $e)
         {
             Log::info($e);
-            echo 'ERROR: Xero Authentication Error. Check logs for more details.';
+            echo 'ERROR: Xero Authentication Error. Check logs for more details.'.PHP_EOL;
             throw $e;
         }
     }
@@ -109,10 +126,19 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 
         // Find existing Entry
         $returned = (new $model);
-        if(isset($obj[$GUID]))
+        if(isset($obj[$GUID])) {
             $saved = $returned->where($GUID, $obj[$GUID])->first();
-        else
+            if($saved == null && property_exists($model, 'unique')) {
+                $returned = (new $model);
+                foreach((new $model)->unique as $unique) {
+                    $returned->orWhere($unique, $obj[$unique]);
+                }
+                $saved = $returned->first();
+            }
+        } else {
             $saved = null;
+        }
+
 
 
         //create new object instance and save to DB
@@ -237,7 +263,7 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 			    	}
 			    	else // otherwise process the sub objects as one-many relations
 			    	{
-						$this->processModel($key, $sub_item, $obj[str_plural($key)], $sub_key.'_id', $saved->id);
+						$this->processModel($key, $sub_item, ( isset($obj[$key.'s']) ? $obj[$key.'s'] : $obj[$key] ), $sub_key.'_id', $saved->id);
 			    	}
 			    		
     			}

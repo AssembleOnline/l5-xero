@@ -44,6 +44,8 @@ class Model extends Eloquent {
     }
 
     
-
+    public function hasUpdateField() {
+        return in_array('UpdatedDateUTC', $this->fillable);
+    }
 
 }

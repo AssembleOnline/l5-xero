@@ -70,6 +70,7 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
         try
         {
 
+            echo "Running XeroPush For ".$this->model.PHP_EOL;
 
             $class = '\\XeroPHP\\Models\\Accounting\\'.$this->model;
             $xeroApp = $xero->getApp();
@@ -107,10 +108,11 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
             // }
             // else
             // {
-                $res = $xeroApp->save($item);
-                // Log::info(print_r($res));
-                $toSave = $res->getElements();
-                $toSave = $toSave[0];
+            $res = $xeroApp->save($item);                
+
+            // Log::info(print_r($res));
+            $toSave = $res->getElements();
+            $toSave = $toSave[0];
             // }
 
             // print_r($toSave);
@@ -147,6 +149,16 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
             Log::error($e);
             echo 'ERROR: Xero Authentication Error. Check logs for more details.';
             throw $e;
+        }
+        catch (\XeroPHP\Remote\Exception\BadRequestException $e) {
+            Log::error($e);
+            echo 'ERROR: Xero Request Error.';
+            throw $e;
+        }
+        catch (Exception $e) {
+            Log::error($e);
+            echo 'ERROR: Unexpected error occured.';
+            throw $e;    
         }
     }
 

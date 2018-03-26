@@ -23,32 +23,42 @@ class Contact extends Model {
      * @var array
      */
     protected $fillable = [
-		'ContactID',
-		'ContactNumber',
-		'AccountNumber',
-		'ContactStatus',
-		'Name',
-		'FirstName',
-		'LastName',
-		'EmailAddress',
-		'SkypeUserName',
-		'BankAccountDetails',
-		'TaxNumber',
-		'AccountsReceivableTaxType',
-		'AccountsPayableTaxType',
-		'IsSupplier',
-		'IsCustomer',
-		'DefaultCurrency',
-		'XeroNetworkKey',
-		'SalesDefaultAccountCode',
-		'PurchasesDefaultAccountCode',
-		'UpdatedDateUTC',
-		'Website',
-		'BatchPayments',
-		'Discount',
-		'Balances',
-		'HasAttachments',
-		'BrandingTheme_id',
+  		'ContactID',
+  		'ContactNumber',
+  		'AccountNumber',
+  		'ContactStatus',
+  		'Name',
+  		'FirstName',
+  		'LastName',
+  		'EmailAddress',
+  		'SkypeUserName',
+  		'BankAccountDetails',
+  		'TaxNumber',
+  		'AccountsReceivableTaxType',
+  		'AccountsPayableTaxType',
+  		'IsSupplier',
+  		'IsCustomer',
+  		'DefaultCurrency',
+  		'XeroNetworkKey',
+  		'SalesDefaultAccountCode',
+  		'PurchasesDefaultAccountCode',
+  		'UpdatedDateUTC',
+  		'Website',
+  		'BatchPayments',
+  		'Discount',
+  		'Balances',
+  		'HasAttachments',
+  		'BrandingTheme_id',
+    ];
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    public $unique = [
+      'AccountNumber',
+      'Name'
     ];
 
     public function ContactGroups()
@@ -60,6 +70,11 @@ class Contact extends Model {
    	{
    		return $this->hasMany('Assemble\l5xero\Models\ContactPerson', 'Contact_id');
    	}
+    // Possible pluralisation issues have been seen here, need to clarify versioning.
+    public function ContactPeople()
+    {
+      return $this->hasMany('Assemble\l5xero\Models\ContactPerson', 'Contact_id');
+    }
 
    	public function Addresses()
    	{
