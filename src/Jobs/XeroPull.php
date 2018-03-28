@@ -127,13 +127,16 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
         // Find existing Entry
         $returned = (new $model);
         if(isset($obj[$GUID])) {
-            $saved = $returned->where($GUID, $obj[$GUID])->first();
+            $saved = $returned->where($GUID, '=', $obj[$GUID])->first();
             if($saved == null && property_exists($model, 'unique')) {
                 $returned = (new $model);
                 foreach((new $model)->unique as $unique) {
-                    $returned->orWhere($unique, $obj[$unique]);
+                    if(isset($obj[$unique])) {
+                        $returned = $returned->orWhere($unique, '=', $obj[$unique]);
+                    }
                 }
                 $saved = $returned->first();
+                
             }
         } else {
             $saved = null;
