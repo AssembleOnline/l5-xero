@@ -84,7 +84,7 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 
             // Only get recently updated records
             $class = $this->prefix.$this->model;
-            if(method_exists($object, 'modifiedAfter') && (new $class)->hasUpdateField()) {
+            if(method_exists($object, 'modifiedAfter') && (new $class)->hasUpdateField() && $this->since != null) {
                 $since = new Carbon($this->since);
                 echo "Getting Updates Since: ".$since.PHP_EOL;
                 $object = $object->modifiedAfter($since);
@@ -127,7 +127,11 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
         // Find existing Entry
         $returned = (new $model);
         if(isset($obj[$GUID])) {
+
+            // Test for existence based on XeroID GUID
             $saved = $returned->where($GUID, '=', $obj[$GUID])->first();
+
+            // Test for existence based on Xero Model Unique Field(s)
             if($saved == null && property_exists($model, 'unique')) {
                 $returned = (new $model);
                 foreach((new $model)->unique as $unique) {

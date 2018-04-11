@@ -38,6 +38,15 @@ class Item extends Model {
 		'UpdatedDateUTC',
     ];
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    public $unique = [
+      'Code'
+    ];
+
     public function line_items()
     {
     	return $this->hasMany('Assemble\l5xero\Models\LineItem');
