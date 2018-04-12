@@ -28,10 +28,13 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
     protected $model;
     protected $map;
     protected $page;
-    protected $saved = 0;
-    protected $updated = 0;
     protected $callback;
 
+    protected $saved = 0;
+    protected $updated = 0;
+    protected $deleted = 0;
+
+    protected $xeroInstance;
     private $since;
 
     /**
@@ -52,7 +55,17 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 
         $this->callback = $callback;
         $class = $this->prefix.$this->model;
-        $this->since = ( $since == null && (new $class)->hasUpdateField() ? (new $class)->max('UpdatedDateUTC') : $since );
+
+
+        if($this->since != null) {
+            $this->since = $since;
+        } 
+        elseif((new $class)->hasUpdateField()) {
+            // set our own
+            $this->since = new Carbon((new $class)->max('UpdatedDateUTC'));
+            // get latest date +1 second
+            $this->since->addSeconds(1);
+        }
     }
 
     /**
@@ -65,13 +78,13 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
         $this->rateLimit_canRun();
         switch (strtolower($this->xero)) {
             case 'private':
-                $xero = new Xero($this->xero);
+                $this->xeroInstance = new Xero($this->xero);
             break;
             case 'public':
-                $xero = new Xero($this->xero);
+                $this->xeroInstance = new Xero($this->xero);
             break;
             case 'partner':
-                $xero = new Xero($this->xero);
+                $this->xeroInstance = new Xero($this->xero);
             break;
             default:
                 throw new \Assemble\l5xero\Exceptions\InvalidTypeException();
@@ -80,7 +93,7 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
         {
             echo "Running XeroPull For ".$this->model.PHP_EOL;
 
-            $object = $xero->load($this->map['MODEL']);
+            $object = $this->xeroInstance->load($this->map['MODEL']);
 
             // Only get recently updated records
             $class = $this->prefix.$this->model;
@@ -96,7 +109,7 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
                 
             $this->processModel($this->model, $this->map, $objects, null, null, true);
 
-            echo "SAVED [".$this->saved."] UPDATED [".$this->updated."] ".$this->model."(s) & related Object(s)\n".PHP_EOL;
+            echo "SAVED [".$this->saved."] UPDATED [".$this->updated."] DELETED [".$this->deleted."] ".$this->model."(s) & related Object(s)\n".PHP_EOL;
             
 
             //Check page count if need more, queue them at front...
@@ -114,6 +127,20 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
         }
     }
 
+    /**
+     * Save recieved data to model in database
+     *
+     * @param String $GUID
+     * @param Array $obj
+     * @param String $model
+     * @param Array $fillable
+     * @param Mixed $parent_key
+     * @param Mixed $parent_value
+     *
+     * @return \Illuminate\Database\Eloquent\Model
+     *
+     * @throws \Illuminate\Database\QueryException when unable to save
+     */
     private function saveToModel($GUID, $obj, $model, $fillable, $parent_key = null, $parent_value = null)
     {
         /*
@@ -132,9 +159,9 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
             $saved = $returned->where($GUID, '=', $obj[$GUID])->first();
 
             // Test for existence based on Xero Model Unique Field(s)
-            if($saved == null && property_exists($model, 'unique')) {
+            if($saved == null && $this->getModelUniques($model)) {
                 $returned = (new $model);
-                foreach((new $model)->unique as $unique) {
+                foreach($this->getModelUniques($model) as $unique) {
                     if(isset($obj[$unique])) {
                         $returned = $returned->orWhere($unique, '=', $obj[$unique]);
                     }
@@ -146,8 +173,6 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
             $saved = null;
         }
 
-
-
         //create new object instance and save to DB
         $new = [];
         foreach($fillable as $item)
@@ -155,9 +180,7 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
             $new[$item] = ( isset($obj[$item]) ? $obj[$item] : null );
         }
 
-
-
-			//Add id to new item if created in upper parent
+		//Add id to new item if created in upper parent
 		if($parent_key != null && $parent_value != null)
 		{
 			$new[$parent_key] = $parent_value;
@@ -171,44 +194,114 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 
     		$returned = (new $model);
             $returned->fill($new);
-            try {
-                $done = $returned->save();
-            } catch(Exception $e) {
-                Log::error("L5XERO - Exception: Failed To Save [".$model."] Relation [".$parent_key.":".$parent_value."] Reason [Failed To Save Child]");
-                throw $e;
-            }
+            $done = $returned->save();
+            
             if(!$done) {
                 Log::error("L5XERO - ERROR: Failed To Save [".$model."] Relation [".$parent_key.":".$parent_value."] Reason [Failed To Save Child]");
             }
-            $this->saved++;
 
+            $this->saved++;
             return $returned;
         }
         else
         {
             $saved->fill($new);
-            try {
-                $done = $saved->save();
-            } catch(Exception $e) {
-                Log::error("L5XERO - Exception: Failed To Save [".$model."] Relation [".$parent_key.":".$parent_value."] Reason [Failed To Save Child]");
-                throw $e;
-            }
+            $done = $saved->save();
+            
             if(!$done) {
                 Log::error("L5XERO - ERROR: Failed To Save [".$model."] Relation [".$parent_key.":".$parent_value."] Reason [Failed To Save Child]");
             }
-            $this->updated++;
 
+            $this->updated++;
             return $saved;
         }
     }
 
+    /**
+     * Get unique fields from model definition
+     * when $obj set it will return field values otherwise will return field names
+     *
+     * @param String $model
+     * @param Array $obj - optional
+     *
+     * @return Array
+     * @return Boolean - when no fields defined
+     */
+    private function getModelUniques($model, $obj = null) {
+        if(property_exists($model, 'unique') && sizeof((new $model)->unique) > 0) {
+            if($obj) {
+                $fields = [];
+                $item = ( $obj );
+                foreach((new $model)->unique as $field) {
+                    $fields[$field] = $obj[$field];
+                } 
+                return $fields;
+            }
+            return (new $model)->unique;
+        }
+        return false;
+    }
+
+    /**
+     * dispatces a callback job provided
+     *
+     * @param String $object
+     * @param String $status
+     *
+     * @return void
+     */
     private function queueCallback($object, $status)
     {
             $job = (new ReflectionClass($this->callback))->newInstanceArgs([$object, $status]);
             dispatch($job);
     }
 
-    private function processModel($sub_key, $map, $withStuff, $parent_key = null, $parent_value = null, $shallow = false)
+    /**
+     * Queries Xero by XeroID field on records to test for a 404 response
+     *
+     * @param String $model
+     * @param String $GUID
+     *
+     * @return Boolean
+     */
+    private function testForXeroExistence($model, $GUID) {
+        try {
+            $this->xeroInstance->loadByGUID($model, $GUID);
+            return true;
+        } catch (\XeroPHP\Remote\Exception\NotFoundException $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Retrieves an existing record by unique fields
+     *
+     * @param String $model
+     * @param Array $uniques
+     *
+     * @return \Illuminate\Database\Eloquent\Model
+     */
+    private function getUniqueOffendingRow($model, $uniques) {
+        $item = (new $model);
+        foreach($uniques as $key => $value) {
+            $item = $item->orWhere($key, $value);
+        }
+        return $item->first();
+    }
+
+    /**
+     * Processes a retrieved record and sub relations therein
+     *
+     * @param String $sub_key
+     * @param Array $map
+     * @param Array $object_data
+     * @param String $parent_key
+     * @param Mixed $parent_value
+     * @param Boolean $shallow
+     *
+     * @return void
+     */
+    private function processModel($sub_key, $map, $object_data, $parent_key = null, $parent_value = null, $shallow = false)
     {
     	$model = $this->prefix.$sub_key;
     	$instance = (new $model);
@@ -218,11 +311,39 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 
         $last_updated = 0;
         $last_saved = 0;
-        foreach($withStuff as $obj)
+        foreach($object_data as $obj)
         {
     		//DO SAVE!
             try {
                 $saved = $this->saveToModel($map['GUID'], $obj, $model, $fillable, $parent_key, $parent_value);
+            } catch (\Illuminate\Database\QueryException $e) {
+                // if its a unique constraint scenario ie: someone deleted a record and updated another one with the same unique fields
+                if($e->getCode() == 23000) {
+                    Log::info("Duplicate Record On Update: ".$e);
+                    $uniques = $this->getModelUniques($model, $obj);
+                    $offendingRow = $this->getUniqueOffendingRow($model, $uniques);
+                    if($offendingRow) {
+                        $exists = $this->testForXeroExistence($map['MODEL'], $offendingRow->getAttributeValue($map['GUID']));
+                        if(!$exists) {
+                            try {
+                                $offendingRow->delete();
+                                $this->deleted++;
+                                $saved = $this->saveToModel($map['GUID'], $obj, $model, $fillable, $parent_key, $parent_value);
+                            } catch (Excepton $e) {
+                                Log::error("Unable to handle delete-update condition: ".$e);
+                                continue;
+                            }
+                        } else {
+                            Log::error("Duplicate Record On Update - Cannot Be Resolved: ".$e);
+                            continue;
+                        }
+                    }
+                    continue;
+                } else {
+                    Log::error("Failed To Store \"".$model."\" Level 1 - Query Exception");
+                    Log::error($e);
+                    continue;
+                }
             } catch (Exception $e) {
                 Log::error("Failed To Store \"".$model."\" Level 1");
                 Log::error($e);
