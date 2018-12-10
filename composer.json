@@ -12,7 +12,7 @@
         }
     ],
     "require": {
-        "calcinai/xero-php": "1.4.1"
+        "calcinai/xero-php": "1.8.4"
     },
     "classmap": {
         
