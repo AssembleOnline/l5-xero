@@ -57,7 +57,7 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
         $class = $this->prefix.$this->model;
 
 
-        if($this->since != null) {
+        if($since != null) {
             $this->since = $since;
         } 
         elseif((new $class)->hasUpdateField()) {
