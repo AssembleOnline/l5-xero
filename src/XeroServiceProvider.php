@@ -20,6 +20,7 @@ class XeroServiceProvider extends ServiceProvider
     {
         $this->setupConfig();
         $this->setupMigrations();
+        $this->setupRoutes();
     }
 
     /**
@@ -65,6 +66,15 @@ class XeroServiceProvider extends ServiceProvider
         $this->publishes([ $source => $this->app->databasePath().'/migrations' ]);
     }
     
+    /**
+    *   Setup the routes
+    *   
+    *   @return void
+    */
+    protected function setupRoutes()
+    {
+        require __DIR__.'/routes.php';
+    }
 
 
 

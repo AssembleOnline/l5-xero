@@ -12,7 +12,12 @@ class ContactGroup extends Model {
      */
     protected $table = 'contact_groups';
     
-
+    /**
+    *   attribute to track what type of save occured in events
+    */
+    public $save_event_type = 0;
+    public $internal_original_attributes = [];
+    
     /**
      * The attributes that are mass assignable.
      *

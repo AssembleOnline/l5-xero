@@ -16,7 +16,7 @@ class XeroUpdateAll extends Command
      *
      * @var string
      */
-    protected $signature = 'xero:sync {type}';
+    protected $signature = 'xero:sync {type} {since}';
 
     /**
      * The console command description.
@@ -33,6 +33,10 @@ class XeroUpdateAll extends Command
     public function handle()
     {
         $xero = $this->argument('type');
+        $since = $this->argument('since');
+        if($since) {
+            $since = new \Carbon\Carbon($since);
+        }
 
 
         $this->queuePushForType($xero, 'ContactGroup', \Assemble\l5xero\Models\ContactGroup::where('ContactGroupID', null)->get());
@@ -44,13 +48,13 @@ class XeroUpdateAll extends Command
         $this->queuePushForType($xero, 'Prepayment', \Assemble\l5xero\Models\Prepayment::where('PrepaymentID', null)->get());
 
 
-        dispatch(new XeroPull($xero, 'ContactGroup'));
-        dispatch(new XeroPull($xero, 'Contact'));
-        dispatch(new XeroPull($xero, 'Item'));
-        dispatch(new XeroPull($xero, 'Invoice'));
-        dispatch(new XeroPull($xero, 'Payment'));
-        dispatch(new XeroPull($xero, 'Overpayment'));
-        dispatch(new XeroPull($xero, 'Prepayment'));
+        dispatch(new XeroPull($xero, 'ContactGroup', $since));
+        dispatch(new XeroPull($xero, 'Contact', $since));
+        dispatch(new XeroPull($xero, 'Item', $since));
+        dispatch(new XeroPull($xero, 'Invoice', $since));
+        dispatch(new XeroPull($xero, 'Payment', $since));
+        dispatch(new XeroPull($xero, 'Overpayment', $since));
+        dispatch(new XeroPull($xero, 'Prepayment', $since));
 
     }
 

@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Assemble\l5xero\Jobs\Job;
 use Assemble\l5xero\Traits\XeroClassMap;
 use Assemble\l5xero\Traits\XeroAPIRateLimited;
+use Assemble\l5xero\Traits\UpdatesXeroModel;
 
 use Assemble\l5xero\Xero;
 
@@ -20,7 +21,7 @@ use Carbon\Carbon;
 
 class XeroPull extends Job implements SelfHandling, ShouldQueue
 {
-    use InteractsWithQueue, SerializesModels, XeroClassMap, XeroAPIRateLimited;
+    use InteractsWithQueue, SerializesModels, XeroClassMap, XeroAPIRateLimited, UpdatesXeroModel;
 
 
     protected $xero;
@@ -46,7 +47,7 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
     public function __construct($xero, $model, $page = null, $callback = null, $since = null)
     {
         $this->xero = $xero;
-    	$this->prefix = 'Assemble\\l5xero\\Models\\';
+        $this->prefix = 'Assemble\\l5xero\\Models\\';
         
         $map = $this->getXeroClassMap();
         $this->map = $map[$model];
@@ -88,10 +89,8 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
             break;
             default:
                 throw new \Assemble\l5xero\Exceptions\InvalidTypeException();
-        }
-        try
-        {
-            echo "Running XeroPull For ".$this->model.PHP_EOL;
+        } try {
+            Log::info("Running XeroPull For ".$this->model);
 
             $object = $this->xeroInstance->load($this->map['MODEL']);
 
@@ -99,147 +98,33 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
             $class = $this->prefix.$this->model;
             if(method_exists($object, 'modifiedAfter') && (new $class)->hasUpdateField() && $this->since != null) {
                 $since = new Carbon($this->since);
-                echo "Getting Updates Since: ".$since.PHP_EOL;
+                Log::info("Getting Updates Since: ".$since);
                 $object = $object->modifiedAfter($since);
             }
             $pageable = call_user_func('XeroPHP\\Models\\'.$this->map['MODEL'].'::isPageable');
             $objects = ( $pageable ? $object->page($this->page)->execute() : $object->execute() );
 
-            echo "FOUND [".count($objects)."] ".$this->model."(s)\n".PHP_EOL;
+            //Check page count if need more, queue them at front...
+            if($pageable == true && count($objects) == 100 && $this->page != null) {
+                $this->page++;
+                dispatch(new XeroPull($this->xero, $this->model, $this->page, $this->callback, $this->since));
+                Log::info("ADDED NEXT PAGE { ".$this->page." } TO QUEUE FOR ".$this->model."(s)\n");
+            }
+            
+            Log::info("FOUND [".count($objects)."] ".$this->model."(s)\n");
                 
             $this->processModel($this->model, $this->map, $objects, null, null, true);
 
-            echo "SAVED [".$this->saved."] UPDATED [".$this->updated."] DELETED [".$this->deleted."] ".$this->model."(s) & related Object(s)\n".PHP_EOL;
+            Log::info("SAVED [".$this->saved."] UPDATED [".$this->updated."] DELETED [".$this->deleted."] ".$this->model."(s) & related Object(s)\n");
             
 
-            //Check page count if need more, queue them at front...
-        	if($pageable == true && count($objects) == 100 && $this->page != null) {
-                $this->page++;
-                dispatch(new XeroPull($this->xero, $this->model, $this->page, $this->callback, $this->since));
-                echo "ADDED NEXT PAGE { ".$this->page." } TO QUEUE FOR ".$this->model."(s)\n".PHP_EOL;
-            }
         }
         catch(\XeroPHP\Remote\Exception\UnauthorizedException $e)
         {
-            Log::info($e);
+            Log::error($e);
             echo 'ERROR: Xero Authentication Error. Check logs for more details.'.PHP_EOL;
             throw $e;
         }
-    }
-
-    /**
-     * Save recieved data to model in database
-     *
-     * @param String $GUID
-     * @param Array $obj
-     * @param String $model
-     * @param Array $fillable
-     * @param Mixed $parent_key
-     * @param Mixed $parent_value
-     *
-     * @return \Illuminate\Database\Eloquent\Model
-     *
-     * @throws \Illuminate\Database\QueryException when unable to save
-     */
-    private function saveToModel($GUID, $obj, $model, $fillable, $parent_key = null, $parent_value = null)
-    {
-        /*
-        *   set to string array if XeroPHP collection
-        */
-        if(!is_array($obj))
-        {
-            $obj = $obj->toStringArray();
-        }
-
-        // Find existing Entry
-        $returned = (new $model);
-        if(isset($obj[$GUID])) {
-
-            // Test for existence based on XeroID GUID
-            $saved = $returned->where($GUID, '=', $obj[$GUID])->first();
-
-            // Test for existence based on Xero Model Unique Field(s)
-            if($saved == null && $this->getModelUniques($model)) {
-                $returned = (new $model);
-                foreach($this->getModelUniques($model) as $unique) {
-                    if(isset($obj[$unique])) {
-                        $returned = $returned->orWhere($unique, '=', $obj[$unique]);
-                    }
-                }
-                $saved = $returned->first();
-                
-            }
-        } else {
-            $saved = null;
-        }
-
-        //create new object instance and save to DB
-        $new = [];
-        foreach($fillable as $item)
-        {
-            $new[$item] = ( isset($obj[$item]) ? $obj[$item] : null );
-        }
-
-		//Add id to new item if created in upper parent
-		if($parent_key != null && $parent_value != null)
-		{
-			$new[$parent_key] = $parent_value;
-		}
-		
-		$new['updated_at'] = date('Y-m-d H:i:s');
-
-        if($saved == null)
-        {
-            $new['created_at'] = date('Y-m-d H:i:s');
-
-    		$returned = (new $model);
-            $returned->fill($new);
-            $done = $returned->save();
-            
-            if(!$done) {
-                Log::error("L5XERO - ERROR: Failed To Save [".$model."] Relation [".$parent_key.":".$parent_value."] Reason [Failed To Save Child]");
-            }
-
-            $this->saved++;
-            return $returned;
-        }
-        else
-        {
-            $saved->fill($new);
-            $done = $saved->save();
-            
-            if(!$done) {
-                Log::error("L5XERO - ERROR: Failed To Save [".$model."] Relation [".$parent_key.":".$parent_value."] Reason [Failed To Save Child]");
-            }
-
-            $this->updated++;
-            return $saved;
-        }
-    }
-
-    /**
-     * Get unique fields from model definition
-     * when $obj set it will return field values otherwise will return field names
-     *
-     * @param String $model
-     * @param Array $obj - optional
-     *
-     * @return Array
-     * @return Boolean - when no fields defined
-     */
-    private function getModelUniques($model, $obj = null) {
-        if(property_exists($model, 'unique') && sizeof((new $model)->unique) > 0) {
-            if($obj) {
-                $fields = [];
-                $item = ( $obj );
-                foreach((new $model)->unique as $field) {
-                    $fields[$field] = $obj[$field];
-                } 
-                return $fields;
-            }
-            return (new $model)->unique;
-        }
-        return false;
     }
 
     /**
@@ -250,9 +135,9 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
      *
      * @return void
      */
-    private function queueCallback($object, $status)
+    private function queueCallback($object, $status, $original)
     {
-            $job = (new ReflectionClass($this->callback))->newInstanceArgs([$object, $status]);
+            $job = (new ReflectionClass($this->callback))->newInstanceArgs([$object, $status, $original]);
             dispatch($job);
     }
 
@@ -303,23 +188,28 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
      */
     private function processModel($sub_key, $map, $object_data, $parent_key = null, $parent_value = null, $shallow = false)
     {
-    	$model = $this->prefix.$sub_key;
-    	$instance = (new $model);
-    	$items = [];
-    	$fillable = $instance->getFillable();
+        $model = $this->prefix.$sub_key;
+        $instance = (new $model);
+        $items = [];
+        $fillable = $instance->getFillable();
         $sub = $map['SUB'];
 
         $last_updated = 0;
         $last_saved = 0;
+
+        $saved_models = [];
+
         foreach($object_data as $obj)
         {
-    		//DO SAVE!
+            \Log::info("XeroPull processing record");
+            //DO SAVE!
             try {
                 $saved = $this->saveToModel($map['GUID'], $obj, $model, $fillable, $parent_key, $parent_value);
+                $original = $saved->internal_original_attributes;
             } catch (\Illuminate\Database\QueryException $e) {
                 // if its a unique constraint scenario ie: someone deleted a record and updated another one with the same unique fields
                 if($e->getCode() == 23000) {
-                    Log::info("Duplicate Record On Update: ".$e);
+                    \Log::info("Duplicate Record On Update: ".$e);
                     $uniques = $this->getModelUniques($model, $obj);
                     $offendingRow = $this->getUniqueOffendingRow($model, $uniques);
                     if($offendingRow) {
@@ -330,86 +220,104 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
                                 $this->deleted++;
                                 $saved = $this->saveToModel($map['GUID'], $obj, $model, $fillable, $parent_key, $parent_value);
                             } catch (Excepton $e) {
-                                Log::error("Unable to handle delete-update condition: ".$e);
-                                continue;
+                                \Log::error("Unable to handle delete-update condition: ".$e);
+                                return;
                             }
                         } else {
-                            Log::error("Duplicate Record On Update - Cannot Be Resolved: ".$e);
-                            continue;
+                            \Log::error("Duplicate Record On Update - Cannot Be Resolved: ".$e);
+                            return;
                         }
                     }
-                    continue;
+                    return;
                 } else {
-                    Log::error("Failed To Store \"".$model."\" Level 1 - Query Exception");
-                    Log::error($e);
-                    continue;
+                    \Log::error("Failed To Store \"".$model."\" Level 1 - Query Exception");
+                    \Log::error($e);
+                    return;
                 }
             } catch (Exception $e) {
-                Log::error("Failed To Store \"".$model."\" Level 1");
-                Log::error($e);
-                continue;
+                \Log::error("Failed To Store \"".$model."\" Level 1");
+                \Log::error($e);
+                return;
+            }
+            \Log::info("XeroPull processing relations");
+            /*
+            *   Run for collection of sub elements
+            */
+            if($sub != null && count($sub) > 0) {
+                foreach($sub as $key => $sub_item)
+                {
+                    if(isset($obj[$key.'s']) || isset($obj[$key]))
+                    {
+                        //If the sub item kas the tag SINGLE then its a one-one relation so save directly
+                        if( isset($sub_item['SINGLE']))
+                        {
+                            $model_sub = $this->prefix.$key;
+                            $instance_sub = (new $model_sub);
+                            $fillable_sub = $instance_sub->getFillable();
+                            if($sub_item['SINGLE'] == 'HAS')
+                            {
+                                try {
+                                    $saved_sub = $this->saveToModel($sub_item['GUID'], $obj[$key], $model_sub, $fillable_sub, $sub_key.'_id', $saved->id);
+                                } catch (Exception $e) {
+                                    \Log::error("Failed To Store \"".$model."\" Level 2");
+                                    \Log::error($e);
+                                    continue;
+                                }
+                            }
+                            elseif($sub_item['SINGLE'] == 'BELONGS')
+                            {
+                                try {
+                                    $saved_sub = $this->saveToModel($sub_item['GUID'], $obj[$key], $model_sub, $fillable_sub);
+                                } catch (Exception $e) {
+                                    \Log::error("Failed To Store \"".$model."\"  Level 3");
+                                    \Log::error($e);
+                                    continue;
+                                }
+
+                                $saved->{$key.'_id'} = $saved_sub->id;
+                                $saved->save();
+                                $original[$key] = $saved_sub->internal_original_attributes;
+                            }
+
+                        }
+                        else // otherwise process the sub objects as one-many relations
+                        {
+                            $list_key = ( isset($obj[$key.'s']) ? $key.'s' : $key );
+                            $sub_objs = $obj[$list_key];
+                            $saved->{$list_key} = [];
+                            $original[$list_key] = [];
+                            $saved_objs = $this->processModel($key, $sub_item, $sub_objs, $sub_key.'_id', $saved->id);
+                            foreach($saved_objs as $saved_obj) {
+                                $original[$list_key][] = $saved_obj->internal_original_attributes;
+                            }
+                        }
+                            
+                    }
+                }
             }
 
+            // stats
+            $this->saved += ( $saved->save_event_type == 1 ? 1 : 0 ); // saved
+            $this->updated += ( $saved->save_event_type == 2 ? 1 : 0 ); // updates
 
-    		/*
-    		*	Run for collection of sub elements
-    		*/
-    		if($sub != null && count($sub) > 0)
-    		foreach($sub as $key => $sub_item)
-    		{
-    			if(isset($obj[$key.'s']) || isset($obj[$key]))
-				{
-                    //If the sub item kas the tag SINGLE then its a one-one relation so save directly
-					if( isset($sub_item['SINGLE']))
-			    	{
-			    		$model_sub = $this->prefix.$key;
-    					$instance_sub = (new $model_sub);
-			    		$fillable_sub = $instance_sub->getFillable();
-                        if($sub_item['SINGLE'] == 'HAS')
-                        {
-			    		    try {
-                                $saved_sub = $this->saveToModel($sub_item['GUID'], $obj[$key], $model_sub, $fillable_sub, $sub_key.'_id', $saved->id);
-                            } catch (Exception $e) {
-                                Log::error("Failed To Store \"".$model."\" Level 2");
-                                Log::error($e);
-                                continue;
-                            }
-                        }
-                        elseif($sub_item['SINGLE'] == 'BELONGS')
-                        {
-                            try {
-                                $saved_sub = $this->saveToModel($sub_item['GUID'], $obj[$key], $model_sub, $fillable_sub);
-                            } catch (Exception $e) {
-                                Log::error("Failed To Store \"".$model."\"  Level 3");
-                                Log::error($e);
-                                continue;
-                            }
-                           $saved->{$key.'_id'} = $saved_sub->id;
-                           $saved->save();
-                        }
 
-			    	}
-			    	else // otherwise process the sub objects as one-many relations
-			    	{
-						$this->processModel($key, $sub_item, ( isset($obj[$key.'s']) ? $obj[$key.'s'] : $obj[$key] ), $sub_key.'_id', $saved->id);
-			    	}
-			    		
-    			}
-    		}
-
+            \Log::info("XeroPull Testing for callback execution...");
             if($shallow == true && $this->callback != null && isset($this->callback) )
             {
-                if($this->saved > $last_saved)
+                \Log::info("XeroPull Callback declared: ".$this->callback);
+                if($saved->save_event_type == 1)
                 {
-                    $this->queueCallback($saved, 'create');
+                    \Log::info("XeroPull Callback running for [create]");
+                    $this->queueCallback($saved, 'create', $original);
                 }
-                else
+                elseif($saved->save_event_type == 2)
                 {
-                    $this->queueCallback($saved, 'update');
+                    \Log::info("XeroPull Callback running for [update]");
+                    $this->queueCallback($saved, 'update', $original);
                 }
             }
-            $last_saved = $this->saved;
-            $last_updated = $this->updated;
-    	}
+            $saved_models[] = $saved;
+        }
+        return $saved_models;
     }
 }
