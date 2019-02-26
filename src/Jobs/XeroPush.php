@@ -53,6 +53,7 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
      */
     public function handle()
     {
+        \Log::info(["XeroPushEvent", $this->model, $this->id]);
         $this->rateLimit_canRun();
     	switch (strtolower($this->type)) {
             case 'private':
@@ -65,6 +66,7 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
                 $xero = new Xero($this->type);
             break;
             default:
+                \Log::info(["XeroPushException", $this->model, $this->id]);
                 throw new Exception("Application type does not exist [$type]");
         }
         try
@@ -150,16 +152,19 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
         }
         catch(\XeroPHP\Remote\Exception\UnauthorizedException $e)
         {
+            \Log::info(["XeroPushException", $this->model, $this->id]);
             Log::error($e);
             echo 'ERROR: Xero Authentication Error. Check logs for more details.';
             throw $e;
         }
         catch (\XeroPHP\Remote\Exception\BadRequestException $e) {
+            \Log::info(["XeroPushException", $this->model, $this->id]);
             Log::error($e);
             echo 'ERROR: Xero Request Error.';
             throw $e;
         }
         catch (Exception $e) {
+            \Log::info(["XeroPushException", $this->model, $this->id]);
             Log::error($e);
             echo 'ERROR: Unexpected error occured.';
             throw $e;    

@@ -15,5 +15,17 @@ return [
 
     'prefix' => 'lfivexero_',
 
+    'rate_limits' => [
+        [60, 60],
+        [5000, 86400],
+    ],
+    'rate_limit_cache_key' => 'lFiveXero_rateLimitHistory',
+
     'application_type'	=> 'private',
+
+
+    'webhook' => [
+        'signing_key' => 'YOURWEBHOOKKEY',
+        'action'    =>  '\Assemble\l5xero\Controllers\XeroWebhookController@handle',
+    ]
 ];
