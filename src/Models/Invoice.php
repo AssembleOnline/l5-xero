@@ -12,11 +12,6 @@ class Invoice extends Model {
      */
     protected $table = 'invoices';
 
-    public function __construct()
-    {
-        $this->table = config('xero.prefix').$this->table;
-    }
-
     /**
     *   attribute to track what type of save occured in events
     */
