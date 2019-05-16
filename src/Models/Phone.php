@@ -12,10 +12,6 @@ class Phone extends Model {
      */
     protected $table = 'phones';
 
-    public function __construct()
-    {
-        $this->table = config('xero.prefix').$this->table;
-    }
 
     /**
     *   attribute to track what type of save occured in events
