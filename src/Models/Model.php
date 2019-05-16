@@ -5,11 +5,13 @@ use \Illuminate\Database\Eloquent\Model as Eloquent;
 
 class Model extends Eloquent {
     
-    /**
+
+   /**
      * initial constructor to prepend table names with prefix
      */
-    public function __construct()
+    public function __construct(array $attributes = [])
     {
+        parent::__construct($attributes);
         $this->table = config('xero.prefix').$this->table;
     }
 

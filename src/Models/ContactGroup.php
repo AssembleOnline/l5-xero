@@ -29,17 +29,6 @@ class ContactGroup extends Model {
     'ContactGroupID',
     ];
 
-    /**
-     * The attributes that are required.
-     *
-     * @var array
-     */
-
-    public function __construct()
-    {
-        $this->table = config('xero.prefix').$this->table;
-    }
-
    	public function contacts()
    	{
    		return $this->hasMany('Assemble\l5xero\Models\Contact');
