@@ -226,8 +226,6 @@ class XeroPullSingle extends Job implements SelfHandling, ShouldQueue
         if($sub != null && count($sub) > 0) {
             foreach($sub as $key => $sub_item)
             {
-                \Log::info(["SUB SECTION OF THE CODE",print_r([$sub,$key,$sub_item],true)]);
-
                 if(isset($obj[$key.'s']) || isset($obj[$key]))
                 {
                     //If the sub item kas the tag SINGLE then its a one-one relation so save directly
