@@ -107,9 +107,11 @@ trait UpdatesXeroModel {
 
     /**
      * Remove all the relations that exist on the local database but dont exist on xero side
-     *
+     * @param String $GUID 
      * @param String $model
-     * @param Array $obj - optional
+     * @param Array $guids
+     * @param Mixed $parent_key
+     * @param Mixed $parent_value
      *
      * @return int
      */
