@@ -20,10 +20,7 @@ trait UpdatesXeroModel {
      */
     private function saveToModel($GUID, $obj, $model, $fillable, $parent_key = null, $parent_value = null)
     {
-     
-       \Log::info(print_r(["SAVE TO MODELS",$GUID, $obj, $model, $fillable, $parent_key,$parent_value],true));
-      
-
+    
         /*
         *   set to string array if XeroPHP collection
         */
