@@ -84,18 +84,8 @@ class XeroPullSingle extends Job implements SelfHandling, ShouldQueue
         } 
 
         try {
-            \Log::info("Running XeroPullSingle For ".$this->model." [".$this->guid."]");
-
-            $object = $this->xeroInstance->loadByGUID($this->map['MODEL'], $this->guid);
-            \Log::info(print_r(["THIS IS OUR XERO OBJECT",$object],true));
-
-            \Log::info("FOUND ".$this->model.PHP_EOL);
-                
+            $object = $this->xeroInstance->loadByGUID($this->map['MODEL'], $this->guid);                
             $this->processModel($this->model, $this->map, $object, null, null, true);
-
-            \Log::info("SAVED [".$this->saved."] UPDATED [".$this->updated."] DELETED [".$this->deleted."] ".$this->model."(s) & related Object(s)\n");
-            
-
         }
         catch(\XeroPHP\Remote\Exception\UnauthorizedException $e)
         {
@@ -178,8 +168,6 @@ class XeroPullSingle extends Job implements SelfHandling, ShouldQueue
         $last_saved = 0;
 
         $original = [];
-
-        \Log::info("XeroPull processing record");
         //DO SAVE!
         try {
             
@@ -219,7 +207,6 @@ class XeroPullSingle extends Job implements SelfHandling, ShouldQueue
             \Log::error($e);
             return;
         }
-        \Log::info("XeroPull processing relations");
         /*
         *   Run for collection of sub elements
         */
@@ -288,18 +275,14 @@ class XeroPullSingle extends Job implements SelfHandling, ShouldQueue
         $this->updated += ( $saved->save_event_type == 2 ? 1 : 0 ); // updates
 
 
-        \Log::info("XeroPull Testing for callback execution...");
         if($shallow == true && $this->callback != null && isset($this->callback) )
         {
-            \Log::info("XeroPull Callback declared: ".$this->callback);
             if($saved->save_event_type == 1)
             {
-                \Log::info("XeroPull Callback running for [create]");
                 $this->queueCallback($saved, 'create', $original);
             }
             elseif($saved->save_event_type == 2)
             {
-                \Log::info("XeroPull Callback running for [update]");
                 $this->queueCallback($saved, 'update', $original);
             }
         }

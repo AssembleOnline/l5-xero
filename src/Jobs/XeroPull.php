@@ -201,7 +201,6 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 
         foreach($object_data as $obj)
         {
-            \Log::info("XeroPull processing record");
             //DO SAVE!
             try {
                 $saved = $this->saveToModel($map['GUID'], $obj, $model, $fillable, $parent_key, $parent_value);
@@ -310,8 +309,6 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
             $this->saved += ( $saved->save_event_type == 1 ? 1 : 0 ); // saved
             $this->updated += ( $saved->save_event_type == 2 ? 1 : 0 ); // updates
 
-
-            \Log::info("XeroPull Testing for callback execution...");
             if($shallow == true && $this->callback != null && isset($this->callback) )
             {
                 \Log::info("XeroPull Callback declared: ".$this->callback);
