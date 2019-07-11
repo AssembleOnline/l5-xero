@@ -48,13 +48,13 @@ class XeroUpdateAll extends Command
         $this->queuePushForType($xero, 'Prepayment', \Assemble\l5xero\Models\Prepayment::where('PrepaymentID', null)->get());
 
 
-        dispatch(new XeroPull($xero, 'ContactGroup', $since));
-        dispatch(new XeroPull($xero, 'Contact', $since));
-        dispatch(new XeroPull($xero, 'Item', $since));
-        dispatch(new XeroPull($xero, 'Invoice', $since));
-        dispatch(new XeroPull($xero, 'Payment', $since));
-        dispatch(new XeroPull($xero, 'Overpayment', $since));
-        dispatch(new XeroPull($xero, 'Prepayment', $since));
+        dispatch(new XeroPull($xero, 'ContactGroup', 1, null, $since));
+        dispatch(new XeroPull($xero, 'Contact', 1, null, $since));
+        dispatch(new XeroPull($xero, 'Item', 1, null, $since));
+        dispatch(new XeroPull($xero, 'Invoice', 1, null, $since));
+        dispatch(new XeroPull($xero, 'Payment', 1, null, $since));
+        dispatch(new XeroPull($xero, 'Overpayment', 1, null, $since));
+        dispatch(new XeroPull($xero, 'Prepayment', 1, null, $since));
 
     }
 
