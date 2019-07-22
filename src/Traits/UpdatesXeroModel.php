@@ -20,6 +20,7 @@ trait UpdatesXeroModel {
      */
     private function saveToModel($GUID, $obj, $model, $fillable, $parent_key = null, $parent_value = null)
     {
+    
         /*
         *   set to string array if XeroPHP collection
         */
@@ -102,6 +103,23 @@ trait UpdatesXeroModel {
             $saved->internal_original_attributes = $original_attributes;
             return $saved;
         }
+    }
+
+    /**
+     * Remove all the relations that exist on the local database but dont exist on xero side
+     * @param String $GUID 
+     * @param String $model
+     * @param Array $guids
+     * @param Mixed $parent_key
+     * @param Mixed $parent_value
+     *
+     * @return int
+     */
+    public function removeOrphanedRelations($GUID,$model,$guids,$parent_key, $parent_value)
+    {
+        return $model::where($parent_key,$parent_value)
+                ->whereNotin($GUID,$guids)
+                ->delete();    
     }
 
 

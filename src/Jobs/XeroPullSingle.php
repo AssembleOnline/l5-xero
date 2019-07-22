@@ -55,6 +55,7 @@ class XeroPullSingle extends Job implements SelfHandling, ShouldQueue
         $this->map = $map[$model];
         $this->model = $model;
         $this->guid = $guid;
+        
 
         $this->callback = $callback;
         $class = $this->prefix.$this->model;
@@ -80,18 +81,11 @@ class XeroPullSingle extends Job implements SelfHandling, ShouldQueue
             break;
             default:
                 throw new \Assemble\l5xero\Exceptions\InvalidTypeException();
-        } try {
-            \Log::info("Running XeroPullSingle For ".$this->model." [".$this->guid."]");
+        } 
 
-            $object = $this->xeroInstance->loadByGUID($this->map['MODEL'], $this->guid);
-
-            \Log::info("FOUND ".$this->model.PHP_EOL);
-                
+        try {
+            $object = $this->xeroInstance->loadByGUID($this->map['MODEL'], $this->guid);                
             $this->processModel($this->model, $this->map, $object, null, null, true);
-
-            \Log::info("SAVED [".$this->saved."] UPDATED [".$this->updated."] DELETED [".$this->deleted."] ".$this->model."(s) & related Object(s)\n");
-            
-
         }
         catch(\XeroPHP\Remote\Exception\UnauthorizedException $e)
         {
@@ -174,12 +168,12 @@ class XeroPullSingle extends Job implements SelfHandling, ShouldQueue
         $last_saved = 0;
 
         $original = [];
-
-        \Log::info("XeroPull processing record");
         //DO SAVE!
         try {
+            
             $saved = $this->saveToModel($map['GUID'], $obj, $model, $fillable, $parent_key, $parent_value);
             $original = $saved->internal_original_attributes;
+
         } catch (\Illuminate\Database\QueryException $e) {
             // if its a unique constraint scenario ie: someone deleted a record and updated another one with the same unique fields
             if($e->getCode() == 23000) {
@@ -213,7 +207,6 @@ class XeroPullSingle extends Job implements SelfHandling, ShouldQueue
             \Log::error($e);
             return;
         }
-        \Log::info("XeroPull processing relations");
         /*
         *   Run for collection of sub elements
         */
@@ -258,8 +251,15 @@ class XeroPullSingle extends Job implements SelfHandling, ShouldQueue
                     {
                         $list_key = ( isset($obj[$key.'s']) ? $key.'s' : $key );
                         $sub_objs = $obj[$list_key];
+                        
                         $saved->{$list_key} = [];
                         $original[$list_key] = [];
+
+                        $model_sub = $this->prefix.$key;
+
+                        $guids = collect($sub_objs)->pluck($sub_item['GUID']);
+                        $this->deleted += $this->removeOrphanedRelations($sub_item['GUID'],$model_sub,$guids,$sub_key.'_id', $saved->id);
+
                         foreach($sub_objs as $sub_obj) {
                             $saved_obj = $this->processModel($key, $sub_item, $sub_obj, $sub_key.'_id', $saved->id);
                             $original[$list_key][] = $saved_obj->internal_original_attributes;
@@ -275,18 +275,14 @@ class XeroPullSingle extends Job implements SelfHandling, ShouldQueue
         $this->updated += ( $saved->save_event_type == 2 ? 1 : 0 ); // updates
 
 
-        \Log::info("XeroPull Testing for callback execution...");
         if($shallow == true && $this->callback != null && isset($this->callback) )
         {
-            \Log::info("XeroPull Callback declared: ".$this->callback);
             if($saved->save_event_type == 1)
             {
-                \Log::info("XeroPull Callback running for [create]");
                 $this->queueCallback($saved, 'create', $original);
             }
             elseif($saved->save_event_type == 2)
             {
-                \Log::info("XeroPull Callback running for [update]");
                 $this->queueCallback($saved, 'update', $original);
             }
         }
