@@ -122,7 +122,7 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
         catch(\XeroPHP\Remote\Exception\UnauthorizedException $e)
         {
             Log::error($e);
-            echo 'ERROR: Xero Authentication Error. Check logs for more details.'.PHP_EOL;
+            // echo 'ERROR: Xero Authentication Error. Check logs for more details.'.PHP_EOL;
             throw $e;
         }
     }
