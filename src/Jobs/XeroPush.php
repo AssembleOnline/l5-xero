@@ -38,7 +38,7 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
      * @return void
      */
 
-    public function __construct($type, $model, $id, $callback = null, $data = [])
+    public function __construct($type, $model, $id, $callback = null)
     {
     	$this->type = $type;
     	$this->model = $model;
@@ -47,7 +47,6 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
     	$this->id = $id;
     	$this->callback = $callback;
     	$this->prefix = 'Assemble\\l5xero\\Models\\';
-        $this->data = $data;
     }
 
 
@@ -57,7 +56,10 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
      * @return void
      */
     public function handle()
-    {    	switch (strtolower($this->type)) {
+    {    	
+        \Log::info(["XeroPushEvent", $this->model, $this->id]);
+        $this->rateLimit_canRun();
+        switch (strtolower($this->type)) {
             case 'private':
                 $xero = new Xero($this->type);
             break;
@@ -67,7 +69,6 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
             case 'partner':
                 $xero = new Xero($this->type);
             break;
-            default:
                 \Log::info(["XeroPushException", $this->model, $this->id]);
                 throw new Exception("Application type does not exist [$type]");
         }
