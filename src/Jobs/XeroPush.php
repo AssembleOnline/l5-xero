@@ -28,6 +28,8 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
     protected $callback;
     protected $prefix;
     protected $map;
+    protected $data;
+
 
     /**
      * Create a new job instance.
@@ -35,6 +37,7 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
      * @param  String $model
      * @return void
      */
+
     public function __construct($type, $model, $id, $callback = null)
     {
     	$this->type = $type;
@@ -46,16 +49,17 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
     	$this->prefix = 'Assemble\\l5xero\\Models\\';
     }
 
+
     /**
      * Execute the job.
      *
      * @return void
      */
     public function handle()
-    {
+    {    	
         \Log::info(["XeroPushEvent", $this->model, $this->id]);
         $this->rateLimit_canRun();
-    	switch (strtolower($this->type)) {
+        switch (strtolower($this->type)) {
             case 'private':
                 $xero = new Xero($this->type);
             break;
@@ -65,25 +69,34 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
             case 'partner':
                 $xero = new Xero($this->type);
             break;
-            default:
                 \Log::info(["XeroPushException", $this->model, $this->id]);
                 throw new Exception("Application type does not exist [$type]");
         }
         try
         {
 
-            echo "Running XeroPush For ".$this->model.PHP_EOL;
+            //echo "Running XeroPush For ".$this->model.PHP_EOL;
 
             $class = '\\XeroPHP\\Models\\Accounting\\'.$this->model;
             $xeroApp = $xero->getApp();
-            $item = new $class($xeroApp);
+            $item = new $class($xeroApp);    
+
+
             $model = $this->prefix.$this->model;
             $instance = (new $model);
             $fillable = $instance->getFillable();
-            $object = $instance->findOrFail($this->id);
-
-            $data = $object->toArray();
-
+            
+            //stop here
+            if(count($this->data) == 0)
+            {
+                $object = $instance->findOrFail($this->id);
+                $data = $object->toArray();
+            }else
+            {
+                $object = $instance->findOrFail($this->id);
+                $data = $this->data;
+            }
+        
             foreach($data as $key => $value)
             {
             	if(is_array($value))
@@ -154,19 +167,19 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
         {
             \Log::info(["XeroPushException", $this->model, $this->id]);
             Log::error($e);
-            echo 'ERROR: Xero Authentication Error. Check logs for more details.';
+            // echo 'ERROR: Xero Authentication Error. Check logs for more details.';
             throw $e;
         }
         catch (\XeroPHP\Remote\Exception\BadRequestException $e) {
             \Log::info(["XeroPushException", $this->model, $this->id]);
             Log::error($e);
-            echo 'ERROR: Xero Request Error.';
+            // echo 'ERROR: Xero Request Error.';
             throw $e;
         }
         catch (Exception $e) {
             \Log::info(["XeroPushException", $this->model, $this->id]);
             Log::error($e);
-            echo 'ERROR: Unexpected error occured.';
+            // echo 'ERROR: Unexpected error occured.';
             throw $e;    
         }
     }

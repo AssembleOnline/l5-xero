@@ -122,7 +122,7 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
         catch(\XeroPHP\Remote\Exception\UnauthorizedException $e)
         {
             Log::error($e);
-            echo 'ERROR: Xero Authentication Error. Check logs for more details.'.PHP_EOL;
+            // echo 'ERROR: Xero Authentication Error. Check logs for more details.'.PHP_EOL;
             throw $e;
         }
     }
@@ -201,7 +201,6 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
 
         foreach($object_data as $obj)
         {
-            \Log::info("XeroPull processing record");
             //DO SAVE!
             try {
                 $saved = $this->saveToModel($map['GUID'], $obj, $model, $fillable, $parent_key, $parent_value);
@@ -240,12 +239,15 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
                 return;
             }
             \Log::info("XeroPull processing relations");
+           
             /*
             *   Run for collection of sub elements
             */
             if($sub != null && count($sub) > 0) {
+
                 foreach($sub as $key => $sub_item)
                 {
+
                     if(isset($obj[$key.'s']) || isset($obj[$key]))
                     {
                         //If the sub item kas the tag SINGLE then its a one-one relation so save directly
@@ -282,10 +284,17 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
                         }
                         else // otherwise process the sub objects as one-many relations
                         {
+
                             $list_key = ( isset($obj[$key.'s']) ? $key.'s' : $key );
                             $sub_objs = $obj[$list_key];
                             $saved->{$list_key} = [];
                             $original[$list_key] = [];
+
+                            $model_sub = $this->prefix.$key;
+
+                            $guids = collect($sub_objs)->pluck($sub_item['GUID']);
+                            $this->deleted += $this->removeOrphanedRelations($sub_item['GUID'],$model_sub,$guids,$sub_key.'_id', $saved->id);
+
                             $saved_objs = $this->processModel($key, $sub_item, $sub_objs, $sub_key.'_id', $saved->id);
                             foreach($saved_objs as $saved_obj) {
                                 $original[$list_key][] = $saved_obj->internal_original_attributes;
@@ -300,8 +309,6 @@ class XeroPull extends Job implements SelfHandling, ShouldQueue
             $this->saved += ( $saved->save_event_type == 1 ? 1 : 0 ); // saved
             $this->updated += ( $saved->save_event_type == 2 ? 1 : 0 ); // updates
 
-
-            \Log::info("XeroPull Testing for callback execution...");
             if($shallow == true && $this->callback != null && isset($this->callback) )
             {
                 \Log::info("XeroPull Callback declared: ".$this->callback);
