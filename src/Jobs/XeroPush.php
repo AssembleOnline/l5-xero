@@ -87,15 +87,10 @@ class XeroPush extends Job implements SelfHandling, ShouldQueue
             $fillable = $instance->getFillable();
             
             //stop here
-            if(count($this->data) == 0)
-            {
-                $object = $instance->findOrFail($this->id);
-                $data = $object->toArray();
-            }else
-            {
-                $object = $instance->findOrFail($this->id);
-                $data = $this->data;
-            }
+      
+            $object = $instance->findOrFail($this->id);
+            $data = $this->data;
+            
         
             foreach($data as $key => $value)
             {
