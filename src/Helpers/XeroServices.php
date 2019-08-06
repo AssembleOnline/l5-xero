@@ -326,7 +326,7 @@ class XeroServices
         }
     }
 
-    public function addBankTransaction($invoice, $amount, $contact, $ref) {
+    public function addBankTransaction($small_balances_account, $amount, $contact, $payment_reference) {
         switch (strtolower($this->type)) {
             case 'private':
                 $xero = new Xero($this->type);
@@ -345,17 +345,14 @@ class XeroServices
             $newTransaction = new \XeroPHP\Models\Accounting\BankTransaction();
 
             $map = $this->getXeroClassMap();
-
-            $item = $xero->loadByGUID('\\XeroPHP\\Models\\Accounting\\Invoice',$invoice->{$map['Invoice']['GUID']});
-            $account = $xero->loadByGUID('\\XeroPHP\\Models\\Accounting\\BankTransaction','562555F2-8CDE-4CE9-8203-0363922537A4');
+            $account = $xero->loadByGUID('\\XeroPHP\\Models\\Accounting\\BankTransaction',$small_balances_account);
 
             $lineItem = new \XeroPHP\Models\Accounting\LineItem()
             ->setQuantity(1)
             ->setUnitAmount($amount)
-            ->setDescription($ref);
+            ->setDescription('Overpayment for ref '.$payment_reference);
 
             $lineItems = [$lineItem];
-            //  dd($account);
             $newTransaction
                 ->setType('RECEIVE-OVERPAYMENT')
                 ->setContact($contact) 
@@ -363,12 +360,12 @@ class XeroServices
                 ->setCurrencyCode() // TODO
                 ->setLineItems($lineItems)
                 ->setAccount($account)
-                ->setIsReconciled(false);
+                ->setIsReconciled(true);
 
             \Log::info([print_r($newTransaction, true)]);
             $posted_payment = $xero->save($newTransaction);
 
-            dd($posted_payment);777
+            // dd($posted_payment);
         }catch(Exception $e){
             \Log::error($e);
             throw new Exception("Test err");
