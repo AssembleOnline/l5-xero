@@ -132,6 +132,12 @@ trait XeroClassMap {
 	                //  'SUB'       => null,
 	                // ],
 	            ],
+			],
+			
+	        'Account' => [
+	            'GUID'      => 'AccountID',
+	            'MODEL' => 'Accounting\\Account',
+	            'SUB'       => null,
 	        ],
 	    ];
 	}
