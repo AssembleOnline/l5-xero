@@ -37,32 +37,36 @@ class Payment extends Model {
 		'CreditNote_id',
 		'Prepayment_id',
 		'Overpayment_id',
-    ];
+	];
+	
+	protected $dates = [
+		'Date'
+	];
 
 
    	public function account()
    	{
-   		return $this->belongsTo('Assemble\l5xero\Account');
+   		return $this->belongsTo('Assemble\l5xero\Models\Account');
    	}
 
    	public function invoice()
    	{
-   		return $this->belongsTo('Assemble\l5xero\Invoice', 'Invoice_id');
+   		return $this->belongsTo('Assemble\l5xero\Models\Invoice', 'Invoice_id');
    	}
 
    	public function credit_note()
    	{
-   		return $this->belongsTo('Assemble\l5xero\CreditNote', 'CreditNote_id');
+   		return $this->belongsTo('Assemble\l5xero\Models\CreditNote', 'CreditNote_id');
    	}
 
    	public function prepayment()
    	{
-   		return $this->belongsTo('Assemble\l5xero\Prepayment', 'Prepayment_id');
+   		return $this->belongsTo('Assemble\l5xero\Models\Prepayment', 'Prepayment_id');
    	}
 
    	public function overpayment()
    	{
-   		return $this->belongsTo('Assemble\l5xero\Overpayment', 'Overpayment_id');
+   		return $this->belongsTo('Assemble\l5xero\Models\Overpayment', 'Overpayment_id');
    	}
 
 }
