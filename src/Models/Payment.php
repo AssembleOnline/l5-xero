@@ -24,6 +24,7 @@ class Payment extends Model {
      */
     protected $fillable = [
 		// 'Account_id',
+		'AccountID',
 		'Date',
 		'CurrencyRate',
 		'Amount',

@@ -319,7 +319,7 @@ class XeroServices
             \Log::info([print_r($newPayment, true)]);
             $posted_payment = $xero->save($newPayment);
 
-            dd($posted_payment);
+            
         }catch(Exception $e){
             \Log::error($e);
             throw new Exception("Test err");
@@ -347,8 +347,9 @@ class XeroServices
             $map = $this->getXeroClassMap();
             $account = $xero->loadByGUID('\\XeroPHP\\Models\\Accounting\\BankTransaction',$small_balances_account);
 
-            $lineItem = new \XeroPHP\Models\Accounting\LineItem()
-            ->setQuantity(1)
+            $lineItem = new \XeroPHP\Models\Accounting\LineItem();
+
+            $lineItem->setQuantity(1)
             ->setUnitAmount($amount)
             ->setDescription('Overpayment for ref '.$payment_reference);
 
