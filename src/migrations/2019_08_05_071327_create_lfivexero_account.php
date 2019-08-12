@@ -30,18 +30,18 @@ class CreateLfivexeroAccount extends Migration
         {  
             $t->increments('id')->unsigned();
 
-            $t->string('Code');
-            $t->string('Name');
-            $t->string('BankAccountNumber');
-            $t->string('Description');
-            $t->string('CurrencyCode');
-            $t->boolean('EnablePaymentsToAccount');
-            $t->boolean('ShowInExpenseClaims');
-            $t->string('AccountID');
-            $t->string('ReportingCode');
-            $t->string('ReportingCodeName');
-            $t->boolean('HasAttachments');
-            $t->timestamp('UpdatedDateUTC');
+            $t->string('Code')->nullable();
+            $t->string('Name')->nullable();
+            $t->string('BankAccountNumber')->nullable();
+            $t->string('Description')->nullable();
+            $t->string('CurrencyCode')->nullable();
+            $t->boolean('EnablePaymentsToAccount')->nullable();
+            $t->boolean('ShowInExpenseClaims')->nullable();
+            $t->string('AccountID')->nullable();
+            $t->string('ReportingCode')->nullable();
+            $t->string('ReportingCodeName')->nullable();
+            $t->boolean('HasAttachments')->nullable();
+            $t->timestamp('UpdatedDateUTC')->nullable();
 
 
             $t->enum('Type', $type )->nullable();
