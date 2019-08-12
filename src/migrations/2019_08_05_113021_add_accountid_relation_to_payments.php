@@ -12,6 +12,7 @@ class AddAccountidRelationToPayments extends Migration
     {
         $this->prefix = config('xero.prefix');
     }
+    
     /**
      * Run the migrations.
      *
@@ -34,6 +35,9 @@ class AddAccountidRelationToPayments extends Migration
      */
     public function down()
     {
-        //
+        Schema::table($this->prefix.'payments', function ($table) {
+            $table->dropForeign(['Account_id']);
+            $table->dropColumn(['Account_id']);
+        });
     }
 }
