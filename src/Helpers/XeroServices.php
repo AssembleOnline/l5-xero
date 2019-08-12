@@ -316,13 +316,12 @@ class XeroServices
                 ->setIsReconciled(true)
                 ->setReference($payment->Reference);
 
-            \Log::info([print_r($newPayment, true)]);
             $posted_payment = $xero->save($newPayment);
 
             
         }catch(Exception $e){
             \Log::error($e);
-            throw new Exception("Test err");
+            throw $e;
         }
     }
 
@@ -365,13 +364,12 @@ class XeroServices
                 ->setBankAccount($account)
                 ->setIsReconciled(false);
 
-            \Log::info([print_r($newTransaction, true)]);
             $posted_payment = $xero->save($newTransaction);
 
             // dd($posted_payment);
         }catch(Exception $e){
             \Log::error($e);
-            throw new Exception("Test err");
+            throw $e;
         }
     }
 }
