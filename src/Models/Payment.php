@@ -23,7 +23,7 @@ class Payment extends Model {
      * @var array
      */
     protected $fillable = [
-		// 'Account_id',
+		'Account_id',
 		'AccountID',
 		'Date',
 		'CurrencyRate',
@@ -44,10 +44,14 @@ class Payment extends Model {
 		'Date'
 	];
 
+    public function setDateAttribute($value)
+    {
+        $this->attributes['Date'] = \Carbon\Carbon::parse($value);
+    }
 
    	public function account()
    	{
-   		return $this->belongsTo('Assemble\l5xero\Models\Account');
+   		return $this->belongsTo('Assemble\l5xero\Models\Account','Account_id');
    	}
 
    	public function invoice()

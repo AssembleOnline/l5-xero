@@ -37,7 +37,7 @@ class XeroServices
     protected $updated = 0;
     protected $deleted = 0;
 
-   public function __construct($type, $model, $id,$data = [],$dirtyItems = [])
+   public function __construct($type, $model, $id = null,$data = [],$dirtyItems = [])
    {
         $this->type = $type;
         $this->model = $model;
@@ -113,10 +113,8 @@ class XeroServices
                 $item->setDirty($dirtyItem);
             }
             //$itemRes = $item->save();
-            $res = $xeroApp->save($item,true);    
-        \Log::info(["the response",print_r($res,true)]);
+        $res = $xeroApp->save($item,true);    
         $updatedItem = $xero->loadByGUID($class,$object->{$this->map['GUID']});
-
         $this->processModel($this->model, $this->map, $updatedItem, null, null, true);
 
 
@@ -181,9 +179,9 @@ class XeroServices
         $last_updated = 0;
         $last_saved = 0;
         $original = [];
+
         //DO SAVE!
         try {
-            
             $saved = $this->saveToModel($map['GUID'], $obj, $model, $fillable, $parent_key, $parent_value);
             $original = $saved->internal_original_attributes;
         } catch (\Illuminate\Database\QueryException $e) {
@@ -284,92 +282,168 @@ class XeroServices
         return $saved;
     }
    
-    public function addPayment($invoice, $payment) {
-        switch (strtolower($this->type)) {
+ 
+    public static function bulkUpdate($type, $model ,$bulkData = [],$dirtyItems = [])
+    {
+        switch (strtolower($type)) {
             case 'private':
-                $xero = new Xero($this->type);
-            break;
             case 'public':
-                $xero = new Xero($this->type);
-            break;
             case 'partner':
-                $xero = new Xero($this->type);
+                $xero = new Xero($type);
             break;
             default:
-                throw new Exception("Application type does not exist [$this->type]");
+                throw new Exception("Application type does not exist [$type]");
+        }
+            $service = new \Assemble\l5xero\Helpers\XeroServices('private',$model);
+            $classMap = $service->getXeroClassMap();
+            $map = $classMap[$model];
+            $prefix = '\\Assemble\\l5xero\\Models\\';
+            $class = '\\XeroPHP\\Models\\Accounting\\'.$model;
+            $xeroApp = $xero->getApp();
+            $items = [];
+
+            foreach ($bulkData as $object)
+            {
+                $model = $prefix.$model;
+                \Log::info($model);
+                exit;
+                $instance = (new $model);
+                $fillable = $instance->getFillable();
+
+                // $item = new $class($xeroApp); 
+                $item = new $class($xeroApp); 
+                $data = $object->toArray();
+                $item->{$service->map['GUID']} = $data[$service->map['GUID']];
+
+                foreach($data as $key => $value)
+                {
+                    if(is_array($value))
+                    {
+                        $data[Str::studly($key)] = $value;
+                        unset($data[$key]);
+                    }
+                }
+
+                $service->cleanFieldTypes($data, $item);
+                $item->fromStringArray($data,true);
+        
+
+                foreach ($dirtyItems as $dirtyItem) {
+                    $item->setDirty($dirtyItem);
+                }
+                $items[] = $item;
+            }
+            $response = $xeroApp->saveAll($items,true);
+            $service = new \Assemble\l5xero\Helpers\XeroServices('private',"Invoice");
+            $service->bulkModelProcess($response);
+    }
+
+
+    public static function addBulkPayments($type,$payments)
+    {
+        switch (strtolower($type)) {
+            case 'private':
+            case 'public':
+            case 'partner':
+                $xero = new Xero($type);
+            break;
+            default:
+                throw new Exception("Application type does not exist [$type]");
         }
 
         try{
-            $newPayment = new \XeroPHP\Models\Accounting\Payment();
+            $xeroPayments = [];
+            foreach ($payments as $payment) 
+            {
+                $newPayment = new \XeroPHP\Models\Accounting\Payment();
 
-            $map = $this->getXeroClassMap();
+                $invoice = new \XeroPHP\Models\Accounting\Invoice();
+                $invoice->setInvoiceID($payment->invoice->InvoiceID);
 
-            $item = $xero->loadByGUID('\\XeroPHP\\Models\\Accounting\\Invoice',$invoice->{$map['Invoice']['GUID']});
-            $account = $xero->loadByGUID('\\XeroPHP\\Models\\Accounting\\Account',$payment->AccountID);
-
-            //  dd($account);
-            $newPayment
-                ->setInvoice($item)
-                ->setAccount($account)
-                ->setDate($payment->Date)
-                ->setAmount($payment->Amount)
-                ->setIsReconciled(true)
-                ->setReference($payment->Reference);
-
-            $posted_payment = $xero->save($newPayment);
-
+                $account = new \XeroPHP\Models\Accounting\Account();
+                $account->setAccountId($payment->AccountID);
+                
+                $xeroPayments[] = $newPayment
+                    ->setInvoice($invoice)
+                    ->setAccount($account)
+                    ->setDate($payment->Date)
+                    ->setAmount($payment->Amount)
+                    ->setIsReconciled(true)
+                    ->setReference($payment->Reference);
+            }
+            $response = $xero->saveAll($xeroPayments);
             
+            $service = new \Assemble\l5xero\Helpers\XeroServices('private',"Payment");
+            $service->bulkModelProcess($response);
+           
+
         }catch(Exception $e){
             \Log::error($e);
             throw $e;
         }
     }
 
-    public function addBankTransaction($account_guid, $amount, $contact_guid, $payment_reference, $currency_code, $payment) {
-        switch (strtolower($this->type)) {
+    public static function addBulkBankTransactions($type,$transactionDetailList) {
+
+        switch (strtolower($type)) {
             case 'private':
-                $xero = new Xero($this->type);
-            break;
             case 'public':
-                $xero = new Xero($this->type);
-            break;
             case 'partner':
-                $xero = new Xero($this->type);
+                $xero = new Xero($type);
             break;
             default:
-                throw new Exception("Application type does not exist [$this->type]");
+                throw new Exception("Application type does not exist [$type]");
         }
 
         try{
-            $newTransaction = new \XeroPHP\Models\Accounting\BankTransaction();
+            $xeroTransactions = [];
+            foreach($transactionDetailList as $transactionDetails)
+            {
+                $newTransaction = new \XeroPHP\Models\Accounting\BankTransaction();
 
-            $map = $this->getXeroClassMap();
+                $account = new \XeroPHP\Models\Accounting\BankTransaction\BankAccount();
+                $account->setAccountID($transactionDetails['AccountID']);
 
-            $account = new \XeroPHP\Models\Accounting\BankTransaction\BankAccount();
-            $account->setAccountID($account_guid);
-            $contact = $xero->loadByGUID('\\XeroPHP\\Models\\Accounting\\Contact',$contact_guid);
+                $contact = new \XeroPHP\Models\Accounting\Contact();
+                $contact->setContactID($transactionDetails['ContactID']);
 
-            $lineItem = new \XeroPHP\Models\Accounting\BankTransaction\LineItem();
+                $lineItem = new \XeroPHP\Models\Accounting\BankTransaction\LineItem();
+                $lineItem->setQuantity(1)
+                ->setUnitAmount($transactionDetails['amount'])
+                ->setDescription('Overpayment for ref '.$transactionDetails['payment_reference']);
 
-            $lineItem->setQuantity(1)
-            ->setUnitAmount($amount)
-            ->setDescription('Overpayment for ref '.$payment_reference);
+                $xeroTransactions[] =  $newTransaction
+                    ->setType('RECEIVE-OVERPAYMENT')
+                    ->setContact($contact) 
+                    ->setDate($transactionDetails['date'])
+                    ->setCurrencyCode($transactionDetails['currency_code'])
+                    ->addLineItem($lineItem)
+                    ->setBankAccount($account)
+                    ->setIsReconciled(false);
+            }
+            return $xero->saveAll($xeroTransactions);
 
-            $newTransaction
-                ->setType('RECEIVE-OVERPAYMENT')
-                ->setContact($contact) 
-                ->setDate($payment->Date)
-                ->setCurrencyCode($currency_code)
-                ->addLineItem($lineItem)
-                ->setBankAccount($account)
-                ->setIsReconciled(false);
-
-            $posted_payment = $xero->save($newTransaction);
-
-            // dd($posted_payment);
         }catch(Exception $e){
             \Log::error($e);
             throw $e;
+        }
+    }
+
+    public function bulkModelProcess($response)
+    {
+        \Log::info(["bluck process",print_r($response->getElements(),true)]);
+
+        foreach ($response->getElements() as $element) 
+        {
+            if(!array_key_exists("ValidationErrors", $element))
+            {
+                $classMap = $this->getXeroClassMap();
+                $map = $classMap[$this->model];
+                $this->processModel($this->model, $map, $element, null, null, true);  
+            }else
+            {
+                \Log::error("error");
+            }
         }
     }
 }
