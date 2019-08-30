@@ -99,8 +99,19 @@ trait XeroClassMap {
 	        'Payment' => [
 	            'GUID'      => 'PaymentID',
 	            'MODEL' => 'Accounting\\Payment',
-	            'SUB'       => null,
-	        ],
+				'SUB'       => [
+					'Account' => [
+						'SINGLE'	=> 'BELONGS',
+				        'GUID'      => 'Contact_id',
+				        'MODEL'     => 'Accounting\\Contact',
+				    ],
+				    'Invoice' => [
+						'SINGLE'	=> 'BELONGS',
+				        'GUID'      => 'Invoice_id',
+				        'MODEL'     => 'Accounting\\Invoice'
+				    ]
+				]	        
+			],
 	        'Overpayment' => [
 	            'GUID'      => 'PrepaymentID',
 	            'MODEL' => 'Accounting\\Overpayment',
@@ -132,6 +143,12 @@ trait XeroClassMap {
 	                //  'SUB'       => null,
 	                // ],
 	            ],
+			],
+			
+	        'Account' => [
+	            'GUID'      => 'AccountID',
+	            'MODEL' => 'Accounting\\Account',
+	            'SUB'       => null,
 	        ],
 	    ];
 	}
