@@ -304,10 +304,8 @@ class XeroServices
 
             foreach ($bulkData as $object)
             {
-                $model = $prefix.$model;
-                \Log::info($model);
-                exit;
-                $instance = (new $model);
+                $instanceClass = $prefix.$model;
+                $instance = (new $instanceClass);
                 $fillable = $instance->getFillable();
 
                 // $item = new $class($xeroApp); 
@@ -431,18 +429,16 @@ class XeroServices
 
     public function bulkModelProcess($response)
     {
-        \Log::info(["bluck process",print_r($response->getElements(),true)]);
-
+        $classMap = $this->getXeroClassMap();
         foreach ($response->getElements() as $element) 
         {
             if(!array_key_exists("ValidationErrors", $element))
             {
-                $classMap = $this->getXeroClassMap();
                 $map = $classMap[$this->model];
                 $this->processModel($this->model, $map, $element, null, null, true);  
             }else
             {
-                \Log::error("error");
+                \Log::error(["{$this->model} Model could not be updated due to Xero error",$element["ValidationErrors"]]);
             }
         }
     }
