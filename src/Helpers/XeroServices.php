@@ -297,7 +297,7 @@ class XeroServices
         ->load($class)
         ->setParameter('IDs',implode(',',$guids))
         ->execute();
-        $service = new \Assemble\l5xero\Helpers\XeroServices('private',"Invoice");
+        $service = new \Assemble\l5xero\Helpers\XeroServices($type,$model);
         $classMap = $service->getXeroClassMap();
         $map = $classMap[$model];
        foreach ($items as $item) {
