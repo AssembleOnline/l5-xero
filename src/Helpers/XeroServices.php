@@ -264,7 +264,6 @@ class XeroServices
                         $original[$list_key] = [];
                         $model_sub = $this->prefix.$key;
                         $guids = collect($sub_objs)->pluck($sub_item['GUID']);
-                        Log::info("remove Relations");
                         $this->deleted += $this->removeOrphanedRelations($sub_item['GUID'],$model_sub,$guids,$sub_key.'_id', $saved->id);
                         foreach($sub_objs as $sub_obj) {
                             $saved_obj = $this->processModel($key, $sub_item, $sub_obj, $sub_key.'_id', $saved->id);
@@ -282,7 +281,30 @@ class XeroServices
         return $saved;
     }
    
- 
+    public static function pullByGuid($type, $model, $guids)
+    {
+        $class = '\\XeroPHP\\Models\\Accounting\\'.$model;
+        switch (strtolower($type)) {
+            case 'private':
+            case 'public':
+            case 'partner':
+                $xero = new Xero($type);
+            break;
+            default:
+                throw new Exception("Application type does not exist [$type]");
+        }
+        $items = $xero
+        ->load($class)
+        ->setParameter('IDs',implode(',',$guids))
+        ->execute();
+        $service = new \Assemble\l5xero\Helpers\XeroServices('private',"Invoice");
+        $classMap = $service->getXeroClassMap();
+        $map = $classMap[$model];
+       foreach ($items as $item) {
+            $service->processModel($model, $map, $item, null, null, true);  
+       }
+    }
+
     public static function bulkUpdate($type, $model ,$bulkData = [],$dirtyItems = [])
     {
         switch (strtolower($type)) {
