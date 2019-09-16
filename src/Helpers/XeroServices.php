@@ -464,7 +464,7 @@ class XeroServices
             {
                 $errors = ["{$this->model} Model could not be updated due to Xero error",$element["ValidationErrors"]];
                 if(!empty($ids) && array_key_exists($key,$ids)) {
-                    $errors["ID"] = $ids[$key];
+                    $errors["InvoiceID"] = $ids[$key];
                 }
                 \Log::error($errors);
             }
