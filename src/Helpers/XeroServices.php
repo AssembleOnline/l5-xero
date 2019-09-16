@@ -373,6 +373,7 @@ class XeroServices
 
         try{
             $xeroPayments = [];
+            $invoice_ids = [];
             foreach ($payments as $payment) 
             {
                 $newPayment = new \XeroPHP\Models\Accounting\Payment();
@@ -390,11 +391,12 @@ class XeroServices
                     ->setAmount($payment->Amount)
                     ->setIsReconciled(true)
                     ->setReference($payment->Reference);
+                $invoice_ids[] = $payment->invoice->InvoiceID;
             }
             $response = $xero->saveAll($xeroPayments);
             
             $service = new \Assemble\l5xero\Helpers\XeroServices('private',"Payment");
-            $service->bulkModelProcess($response);
+            $service->bulkModelProcess($response, $invoice_ids);
            
 
         }catch(Exception $e){
@@ -449,7 +451,7 @@ class XeroServices
         }
     }
 
-    public function bulkModelProcess($response)
+    public function bulkModelProcess($response, $ids = [])
     {
         $classMap = $this->getXeroClassMap();
         foreach ($response->getElements() as $element) 
@@ -460,7 +462,11 @@ class XeroServices
                 $this->processModel($this->model, $map, $element, null, null, true);  
             }else
             {
-                \Log::error(["{$this->model} Model could not be updated due to Xero error",$element["ValidationErrors"]]);
+                $errors = ["{$this->model} Model could not be updated due to Xero error",$element["ValidationErrors"]];
+                if(!empty($ids) && array_key_exists($key,$ids)) {
+                    $errors["ID"] = $ids[$key];
+                }
+                \Log::error($errors);
             }
         }
     }
