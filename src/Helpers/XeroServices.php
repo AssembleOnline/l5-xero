@@ -454,7 +454,7 @@ class XeroServices
     public function bulkModelProcess($response, $ids = [])
     {
         $classMap = $this->getXeroClassMap();
-        foreach ($response->getElements() as $element) 
+        foreach ($response->getElements() as $key => $element)
         {
             if(!array_key_exists("ValidationErrors", $element))
             {
