@@ -102,12 +102,12 @@ trait XeroClassMap {
 				'SUB'       => [
 					'Account' => [
 						'SINGLE'	=> 'BELONGS',
-				        'GUID'      => 'Contact_id',
+				        'GUID'      => 'AccountID',
 				        'MODEL'     => 'Accounting\\Contact',
 				    ],
 				    'Invoice' => [
 						'SINGLE'	=> 'BELONGS',
-				        'GUID'      => 'Invoice_id',
+				        'GUID'      => 'InvoiceID',
 				        'MODEL'     => 'Accounting\\Invoice'
 				    ]
 				]	        
