@@ -32,13 +32,19 @@ class Xero
 
         switch (strtolower($type)) {
             case 'private':
-                $this->app = new \XeroPHP\Application\PrivateApplication($this->config);
+                // $this->app = new \XeroPHP\Application\PrivateApplication($this->config);
+                $xero = new \XeroPHP\Application($accessToken, $tenantId);
+
             break;
             case 'public':
-                $this->app = new \XeroPHP\Application\PublicApplication($this->config);
+                // $this->app = new \XeroPHP\Application\PublicApplication($this->config);
+                $xero = new \XeroPHP\Application($accessToken, $tenantId);
+
             break;
             case 'partner':
-                $this->app = new \XeroPHP\Application\PartnerApplication($this->config);
+                // $this->app = new \XeroPHP\Application\PartnerApplication($this->config);
+                $xero = new \XeroPHP\Application($accessToken, $tenantId);
+
             break;
             default:
                 throw new Exception("Application type does not exist [$type]");
